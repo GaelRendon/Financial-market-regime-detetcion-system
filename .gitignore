@@ -1,0 +1,39 @@
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Configuración de editores
+.vscode/
+.idea/
+
+# Entornos virtuales de Python
+venv/
+.env/
+*.pyc
+__pycache__/
+pvenv/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+*.log
+
+# Compilados
+*.out
+*.class
+*.exe
+*.dll
+
+# Build / dist
+dist/
+build/
+coverage/
+
+# Archivos temporales
+*.swp
+*.swo
+*.tmp
