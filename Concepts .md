@@ -1,0 +1,30 @@
+# Concepts that you should know to understand this project:
+## 1. What OHLCV Data Means?
+The OHLCV refers to the standard fromat for financial price data. It help us track how a stock or crypto moved over a specific timeframe that we selected, and the letters stand for:
+- O (Open): It's when the prices of the timeframes started.
+- H (High): The highest price reached during the timeframe.
+- L (Low): The lowest price reacheed during the timeframe.
+- C (Close): It's the time when the timeframe ended or closed.
+- V (Volume): The total numbers of shares or coins traded during that time.
+
+**Why does this matter to us?**
+If we look at a standard candlestick chart, each "candel" is built entirely from OHLCV data. The "body" shows the Open and Close, the "wicks" show the Highest and Lowest, and the Volume sits at the bottom of it.
+
+## 2. Simple Returns vs Log. Returns
+When we are calculating how much money an asset made or lost, quantitive traders use two different methods:
+|Feature|Simple Returns|Log Returns|
+|-|-|-|
+|Formula|$\frac{Price_{today}-Price_{yesterday}}{Price{Yesterday}} $|$\ln(Price_{today})-\ln(Price_{yesterday})$|
+|What it's good for|Explaining performance to humans(e.g., "My portfolio is up 5% today").|Doing heavy math and data analysis over time.|
+|The big advantage|It's intuitive and easy to calculate.|Time-additivity: You can literally just add daily log returns together to get the total monthly return. Simple returns don't work that way.|
+
+**Quick example of why Log Returns rule for coding:**
+If a stock goes from \$100 up to \$110, that's a +10% simple return. If it drops from \$110 back to \$100, that's a -9.09% simple return. The math doesn't "cancel out" to zero, which breaks algorithms. Log returns do perfectly cancel out to zero.
+
+## 3. Why Traders Care About Volatility
+Volatility measures how violently a price bounces around. Think of it as the "speed limit" of risk.
+
+Most of the traders care about ir for three major reasosn:
+- **Risk Managment:** High volatility means you could make a lot of money fast-or lose your shirt just as quickly. Traders use it to decide how much money to risk on a single trade.
+- **Pricing Options:** Financial derivatives (like options) become more expensive when volatility is high because there's higher chance the price will hit an extreme target.
+- **Strategy Selection:** Some trading bots thrive on chaotuc, hig-volitality markets, while others prefer calm steady trends.
