@@ -6,3 +6,15 @@ The goal of this project is to identify and characterize financial market regime
 
 ## Research question
 Can unsupervised machine learning identify meaningful market regimes in Bitcoin price behavior using statistical and technical features?
+
+## Design Principles
+
+The project is being developed with the following objectives:
+
+- Asset-agnostic analysis pipeline.
+- Configurable data collection parameters.
+- Support for multiple financial assets.
+- Reproducible preprocessing and feature engineering.
+- Extensible architecture for future analytical modules.
+
+Although development currently focuses on BTC-USD, the architecture aims to support any asset available through Yahoo Finance.
