@@ -38,7 +38,7 @@ PCA_VARIANCE_THRESHOLD = 0.95
 # CLUSTERING CONFIGURATION
 # ==========================================
 
-# The clustering algorithm to use. 
+# The clustering algorithm to use. In this specific case.
 CLUSTERING_ALGORITHM = "kmeans"
 
 # The number of clusters to form. This is a hyperparameter that can be tuned.
