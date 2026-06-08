@@ -2,7 +2,7 @@
 # DATA COLLECTION CONFIGURATION
 # ==========================================
 ASSETS = [
-    "BTC-USD"
+    "BTC-USD", 
 ]
 
 # The start and end dates for the data collection. These can be adjusted based on the desired time frame for analysis.
