@@ -1,13 +1,16 @@
-# Archivos de sistema
+# System files
 .DS_Store
 Thumbs.db
 Implementation roadmap.md
 
-# Configuración de editores
+# Personal folder
+Csv/ 
+
+# Editor Settings
 .vscode/
 .idea/
 
-# Entornos virtuales de Python
+# Virtual enviroments
 venv/
 .env/
 *.pyc
@@ -23,7 +26,7 @@ yarn-error.log*
 # Logs
 *.log
 
-# Compilados
+# Compilations
 *.out
 *.class
 *.exe
@@ -34,7 +37,7 @@ dist/
 build/
 coverage/
 
-# Archivos temporales
+# Temporary files
 *.swp
 *.swo
 *.tmp
