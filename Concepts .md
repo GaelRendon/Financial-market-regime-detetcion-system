@@ -59,3 +59,31 @@ When we later perform clustering, momentum helps distinguish:
 -  Neutral Markets
 
 even when volatility remain similar.
+
+## 5. What Feature Engineering Means
+Feature Engineering is the process of creating meaningful variables from raw data.
+
+Raw financial data usually contains:
+- Open
+- High
+- Low
+- Close
+- Volume
+
+However, machine learning algorithms often learn better from features that describe market behavior.
+
+Examples include:
+- Returns
+- Volatility
+- Momentum
+- Moving Averages
+- RSI
+- MACD
+
+**Why does this matter to us?**
+Instead of feeding raw Bitcoin prices into our machine learning model, we transform the data into features that describe:
+- Performance
+- Risk
+- Trend Strength
+
+This makes it easier for algorithms to detect market regimes.
