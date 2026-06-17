@@ -156,3 +156,25 @@ The primary objective of this project is:
 Automatically identify market regimes using machine learning.
 
 Understanding regimes can help investors adapt their strategies to changing market conditions.
+
+## 9. What Clustering Means
+Clustering is an Unsupervised Machine Learning technique used to group similar observations together.
+
+Unlike supervised learning, clustering does not require labeled data.
+
+The algorithm looks for patterns and naturally separates observations into groups.
+
+For example:
+- Group A:
+    - High Returns 
+    - Low Volatility
+- Group B:
+    - Negative Returns 
+    - High Volatility
+
+The algorithm discovers these groups without being told what they represent.
+
+**Why does it matter to us?**
+Our project uses clustering to discover hidden market regimes in Bitcoin data.
+
+The algorithm will analyze the PCA features and determine which observations behave similarly.
