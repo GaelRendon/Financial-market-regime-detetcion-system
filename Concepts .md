@@ -108,3 +108,30 @@ Both PCA and K-Means depend on distance calcualtions.
 
 It features are not scaled properly, the model may identify patterns based only on the largest numerical feature instead of the most important information.
 
+## 7. What Principal Component Analysis (PCA) Does
+Principal Component Analysis (PCA) is a dimensionality reduction technique.
+
+Instead of analyzing several correlated variables separately, PCA creates new variables called Principal Components.
+
+These components capture the most important information contained in the original features.
+
+For this project:
+- Returns
+- Volatility 
+- Momentum 
+
+were transformed into:
+- PC1
+- PC2
+- PC3
+
+Each component represents a combination of the original features.
+
+**Why does this matter to us?**
+PCA helps:
+- Reduce noise
+- Remove redundancy 
+- Simplify visualization
+- Prepare data for clustering
+
+while preserving as much information as possible.
