@@ -178,3 +178,25 @@ The algorithm discovers these groups without being told what they represent.
 Our project uses clustering to discover hidden market regimes in Bitcoin data.
 
 The algorithm will analyze the PCA features and determine which observations behave similarly.
+
+## 10. What K-Means Clustering Does
+K-Means is one of the most popular clustering algorithms.
+
+It works by creating a predefined number of centroids (cluster centers).
+
+The algorithm repeatedly:
+- Assigns observations to the nearest centroid
+- Calculates new centroids
+- Repeats until convergence
+
+The goal is to minimize the distance between observations and the centroid of their assigned cluster.
+
+**Why does this matter to us?**
+K-Means will be the first algorithm used to identify market regimes.
+
+Once clusters are created, we will analyze their characteristics and determine whether they represent:
+- Bull Markets
+- Bear Markets
+- Sideways Markets
+- Other Markets Behaivor
+
