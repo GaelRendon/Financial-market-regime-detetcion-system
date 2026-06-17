@@ -87,3 +87,24 @@ Instead of feeding raw Bitcoin prices into our machine learning model, we transf
 - Trend Strength
 
 This makes it easier for algorithms to detect market regimes.
+
+## 6. Why Scaling is Important
+Machine learning algorithms are heavily influenced by the scale of variables.
+
+Imagine two features:
+- Returns: -0.05 to 0.05
+- Volume: 0 to 50,000,000
+
+Without scaling, the algorithm would pay much more attention to Volume simply because its numerical values are larger.
+
+Scaling transforms variables so they have comparable ranges.
+
+One common method is Standardization:
+- Mean = 0 
+- Standard Deviation = 1
+
+**Why does this matter to us?**
+Both PCA and K-Means depend on distance calcualtions.
+
+It features are not scaled properly, the model may identify patterns based only on the largest numerical feature instead of the most important information.
+
