@@ -28,3 +28,34 @@ Most of the traders care about ir for three major reasosn:
 - **Risk Managment:** High volatility means you could make a lot of money fast-or lose your shirt just as quickly. Traders use it to decide how much money to risk on a single trade.
 - **Pricing Options:** Financial derivatives (like options) become more expensive when volatility is high because there's higher chance the price will hit an extreme target.
 - **Strategy Selection:** Some trading bots thrive on chaotuc, hig-volitality markets, while others prefer calm steady trends.
+
+## 4. What Momentum Means
+Momentum measures whether an asset has been moving consistently in one direction over a recent period.
+
+The key idea is suprisingly simple what we look for is:
+- Assets that have been going up recently often continue going up for a while.
+- And assets that have been falling often continue falling. 
+
+One common way to calculate momentum is:
+- C = Current Price
+- p = Price N Days Ago
+$$
+C - N 
+$$
+
+or another common one is:
+- R = Current Return
+- H = Historical Return
+$$
+R - H
+$$
+
+depending on the strategy.
+**Why does this matter to us?**
+Momentum is one of the three main features used in this project.
+When we later perform clustering, momentum helps distinguish:
+- Strong Uptrends
+- Strong Downtrends
+-  Neutral Markets
+
+even when volatility remain similar.
