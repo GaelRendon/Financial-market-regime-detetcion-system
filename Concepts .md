@@ -135,3 +135,24 @@ PCA helps:
 - Prepare data for clustering
 
 while preserving as much information as possible.
+
+## 8. What A Market Regime Is
+A Market Regime is a period during which the market behaves in a relatively consistent manner.
+
+Example include:
+- Bull Market
+- Bear Market
+- Sideways Market
+- High Volatility Market
+- Low Volatility Market
+
+Different regimes often require different trading strategies. 
+
+A strategy that works well during a strong bull market may perform poorly during a highly volatile bear market.
+
+**Why does this matter to us?**
+The primary objective of this project is:
+
+Automatically identify market regimes using machine learning.
+
+Understanding regimes can help investors adapt their strategies to changing market conditions.
