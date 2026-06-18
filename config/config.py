@@ -41,8 +41,11 @@ PCA_VARIANCE_THRESHOLD = 0.95
 # The clustering algorithm to use. In this specific case.
 CLUSTERING_ALGORITHM = "kmeans"
 
-# The number of clusters to form. This is a hyperparameter that can be tuned.
-N_CLUSTERS = 4
+# The number of clusters with a more extended ones
+MIN_CLUSTERS = 2
+MAX_CLSUTERS = 10
+
+OPTIMAL_N_CLUSTERS = None
 
 # This is used to ensure consistency of the results
 RANDOM_SEED = 42
