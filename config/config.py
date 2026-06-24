@@ -43,7 +43,7 @@ CLUSTERING_ALGORITHM = "kmeans"
 
 # The number of clusters with a more extended ones
 MIN_CLUSTERS = 2
-MAX_CLSUTERS = 10
+MAX_CLUSTERS = 10
 
 OPTIMAL_N_CLUSTERS = None
 
