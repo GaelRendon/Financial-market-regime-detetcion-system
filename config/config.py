@@ -45,9 +45,6 @@ CLUSTERING_ALGORITHM = "kmeans"
 MIN_CLUSTERS = 2
 MAX_CLUSTERS = 10
 
-# Candidate elbow identified during the evaluation
-ELBOW_K = None
-
 # Optimal number of clusters
 OPTIMAL_N_CLUSTERS = None
 
