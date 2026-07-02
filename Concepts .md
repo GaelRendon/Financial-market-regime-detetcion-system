@@ -1,67 +1,76 @@
 # Concepts that you should know to understand this project:
+
 ## 1. What OHLCV Data Means?
-The OHLCV refers to the standard fromat for financial price data. It help us track how a stock or crypto moved over a specific timeframe that we selected, and the letters stand for:
-- O (Open): It's when the prices of the timeframes started.
+OHLCV refers to the standard format for financial price data. It helps us track how a stock or crypto asset moved over a specific timeframe, and the letters stand for:
+
+- O (Open): The price at the start of the timeframe.
 - H (High): The highest price reached during the timeframe.
-- L (Low): The lowest price reacheed during the timeframe.
-- C (Close): It's the time when the timeframe ended or closed.
-- V (Volume): The total numbers of shares or coins traded during that time.
+- L (Low): The lowest price reached during the timeframe.
+- C (Close): The price at the end of the timeframe.
+- V (Volume): The total number of shares or coins traded during that time.
 
-**Why does this matter to us?**
-If we look at a standard candlestick chart, each "candel" is built entirely from OHLCV data. The "body" shows the Open and Close, the "wicks" show the Highest and Lowest, and the Volume sits at the bottom of it.
+**Why does this matter to us?**  
+If we look at a standard candlestick chart, each "candle" is built entirely from OHLCV data. The body shows the Open and Close, the wicks show the High and Low, and the Volume is often displayed separately below the chart.
 
-## 2. Simple Returns vs Log. Returns
-When we are calculating how much money an asset made or lost, quantitive traders use two different methods:
-|Feature|Simple Returns|Log Returns|
-|-|-|-|
-|Formula|$\frac{Price_{today}-Price_{yesterday}}{Price{Yesterday}} $|$\ln(Price_{today})-\ln(Price_{yesterday})$|
-|What it's good for|Explaining performance to humans(e.g., "My portfolio is up 5% today").|Doing heavy math and data analysis over time.|
-|The big advantage|It's intuitive and easy to calculate.|Time-additivity: You can literally just add daily log returns together to get the total monthly return. Simple returns don't work that way.|
+---
 
-**Quick example of why Log Returns rule for coding:**
-If a stock goes from \$100 up to \$110, that's a +10% simple return. If it drops from \$110 back to \$100, that's a -9.09% simple return. The math doesn't "cancel out" to zero, which breaks algorithms. Log returns do perfectly cancel out to zero.
+## 2. Simple Returns vs Log Returns
+When calculating how much money an asset gained or lost, quantitative traders use two main methods:
+
+| Feature | Simple Returns | Log Returns |
+|--------|----------------|-------------|
+| Formula | $\frac{Price_{today} - Price_{yesterday}}{Price_{yesterday}}$ | $\ln(Price_{today}) - \ln(Price_{yesterday})$ |
+| Interpretation | Intuitive percentage change (e.g., “+5% today”) | Continuous return used for modeling |
+| Advantage | Easy to understand | Time-additive (can be summed over time periods) |
+
+**Why log returns are useful for coding:**  
+If a price goes from 100 → 110 (+10%), then back from 110 → 100 (-9.09%), simple returns do not cancel out symmetrically. Log returns, however, properly accumulate over time and behave consistently in mathematical models.
+
+---
 
 ## 3. Why Traders Care About Volatility
-Volatility measures how violently a price bounces around. Think of it as the "speed limit" of risk.
+Volatility measures how much and how quickly an asset’s price fluctuates. Think of it as the “speed of risk.”
 
-Most of the traders care about ir for three major reasosn:
-- **Risk Managment:** High volatility means you could make a lot of money fast-or lose your shirt just as quickly. Traders use it to decide how much money to risk on a single trade.
-- **Pricing Options:** Financial derivatives (like options) become more expensive when volatility is high because there's higher chance the price will hit an extreme target.
-- **Strategy Selection:** Some trading bots thrive on chaotuc, hig-volitality markets, while others prefer calm steady trends.
+Traders care about it for three main reasons:
+
+- **Risk Management:** Higher volatility means higher potential gains but also higher potential losses.
+- **Options Pricing:** Financial derivatives become more expensive when volatility increases.
+- **Strategy Selection:** Some strategies perform better in high-volatility markets, while others prefer stable conditions.
+
+---
 
 ## 4. What Momentum Means
-Momentum measures whether an asset has been moving consistently in one direction over a recent period.
+Momentum measures the strength and direction of a price trend over a given period.
 
-The key idea is suprisingly simple what we look for is:
-- Assets that have been going up recently often continue going up for a while.
-- And assets that have been falling often continue falling. 
+The main idea is:
 
-One common way to calculate momentum is:
-- C = Current Price
-- p = Price N Days Ago
-$$
-C - N 
-$$
+- Assets that have been rising tend to continue rising.
+- Assets that have been falling tend to continue falling.
 
-or another common one is:
-- R = Current Return
-- H = Historical Return
-$$
-R - H
-$$
+A common way to calculate momentum is:
 
-depending on the strategy.
-**Why does this matter to us?**
-Momentum is one of the three main features used in this project.
-When we later perform clustering, momentum helps distinguish:
-- Strong Uptrends
-- Strong Downtrends
--  Neutral Markets
+\[
+Momentum = Price_t - Price_{t-n}
+\]
 
-even when volatility remain similar.
+or in normalized form:
+
+\[
+Momentum = \frac{Price_t}{Price_{t-n}} - 1
+\]
+
+**Why this matters to us:**  
+Momentum is one of the main features in this project. It helps distinguish:
+- Strong uptrends
+- Strong downtrends
+- Neutral markets
+
+even when volatility is similar.
+
+---
 
 ## 5. What Feature Engineering Means
-Feature Engineering is the process of creating meaningful variables from raw data.
+Feature engineering is the process of creating meaningful variables from raw data.
 
 Raw financial data usually contains:
 - Open
@@ -70,133 +79,115 @@ Raw financial data usually contains:
 - Close
 - Volume
 
-However, machine learning algorithms often learn better from features that describe market behavior.
-
-Examples include:
+However, machine learning models perform better when we transform this raw data into descriptive features such as:
 - Returns
 - Volatility
 - Momentum
-- Moving Averages
+- Moving averages
 - RSI
 - MACD
 
-**Why does this matter to us?**
-Instead of feeding raw Bitcoin prices into our machine learning model, we transform the data into features that describe:
+**Why this matters to us:**  
+Instead of feeding raw prices into the model, we create features that describe:
 - Performance
 - Risk
-- Trend Strength
+- Trend strength
 
-This makes it easier for algorithms to detect market regimes.
+This improves the ability of algorithms to detect market behavior.
+
+---
 
 ## 6. Why Scaling is Important
-Machine learning algorithms are heavily influenced by the scale of variables.
+Machine learning algorithms are sensitive to the scale of variables.
 
-Imagine two features:
+For example:
 - Returns: -0.05 to 0.05
 - Volume: 0 to 50,000,000
 
-Without scaling, the algorithm would pay much more attention to Volume simply because its numerical values are larger.
+Without scaling, the model will overweight larger numerical values like volume.
 
-Scaling transforms variables so they have comparable ranges.
+A common method is standardization:
+- Mean = 0
+- Standard deviation = 1
 
-One common method is Standardization:
-- Mean = 0 
-- Standard Deviation = 1
+**Why this matters to us:**  
+Both PCA (indirectly) and K-Means depend on distance-based relationships. If features are not scaled properly, the model may detect patterns based only on magnitude rather than meaningful structure.
 
-**Why does this matter to us?**
-Both PCA and K-Means depend on distance calcualtions.
-
-It features are not scaled properly, the model may identify patterns based only on the largest numerical feature instead of the most important information.
+---
 
 ## 7. What Principal Component Analysis (PCA) Does
 Principal Component Analysis (PCA) is a dimensionality reduction technique.
 
-Instead of analyzing several correlated variables separately, PCA creates new variables called Principal Components.
-
-These components capture the most important information contained in the original features.
+Instead of analyzing multiple correlated variables separately, PCA creates new variables called principal components that capture the most important variation in the data.
 
 For this project:
 - Returns
-- Volatility 
-- Momentum 
+- Volatility
+- Momentum
 
-were transformed into:
+are transformed into:
 - PC1
 - PC2
 - PC3
 
 Each component represents a combination of the original features.
 
-**Why does this matter to us?**
+**Why this matters to us:**  
 PCA helps:
 - Reduce noise
-- Remove redundancy 
+- Remove redundancy
 - Simplify visualization
-- Prepare data for clustering
+- Improve clustering performance
 
-while preserving as much information as possible.
+while preserving most of the important information.
 
-## 8. What A Market Regime Is
-A Market Regime is a period during which the market behaves in a relatively consistent manner.
+---
 
-Example include:
-- Bull Market
-- Bear Market
-- Sideways Market
-- High Volatility Market
-- Low Volatility Market
+## 8. What a Market Regime Is
+A market regime is a period during which the market behaves in a relatively consistent way.
 
-Different regimes often require different trading strategies. 
+Examples include:
+- Bull market
+- Bear market
+- Sideways market
+- High volatility market
+- Low volatility market
 
-A strategy that works well during a strong bull market may perform poorly during a highly volatile bear market.
+Different regimes often require different trading strategies. A strategy that works well in a bull market may fail in a volatile or bearish environment.
 
-**Why does this matter to us?**
-The primary objective of this project is:
+**Why this matters to us:**  
+The main objective of this project is to automatically identify market regimes using machine learning.
 
-Automatically identify market regimes using machine learning.
-
-Understanding regimes can help investors adapt their strategies to changing market conditions.
+---
 
 ## 9. What Clustering Means
-Clustering is an Unsupervised Machine Learning technique used to group similar observations together.
+Clustering is an unsupervised machine learning technique used to group similar observations together without labeled data.
 
-Unlike supervised learning, clustering does not require labeled data.
-
-The algorithm looks for patterns and naturally separates observations into groups.
+Instead of being told what to look for, the algorithm finds patterns in the data and groups similar points.
 
 For example:
-- Group A:
-    - High Returns 
-    - Low Volatility
-- Group B:
-    - Negative Returns 
-    - High Volatility
+- Group A: High returns, low volatility
+- Group B: Negative returns, high volatility
 
-The algorithm discovers these groups without being told what they represent.
+**Why this matters to us:**  
+We use clustering to discover hidden market regimes in financial data based on engineered features.
 
-**Why does it matter to us?**
-Our project uses clustering to discover hidden market regimes in Bitcoin data.
-
-The algorithm will analyze the PCA features and determine which observations behave similarly.
+---
 
 ## 10. What K-Means Clustering Does
 K-Means is one of the most popular clustering algorithms.
 
-It works by creating a predefined number of centroids (cluster centers).
+It works by:
+- Initializing K cluster centers (centroids)
+- Assigning each point to the nearest centroid
+- Updating centroids based on assigned points
+- Repeating until convergence
 
-The algorithm repeatedly:
-- Assigns observations to the nearest centroid
-- Calculates new centroids
-- Repeats until convergence
+The goal is to minimize the distance between points and their assigned cluster center.
 
-The goal is to minimize the distance between observations and the centroid of their assigned cluster.
-
-**Why does this matter to us?**
-K-Means will be the first algorithm used to identify market regimes.
-
-Once clusters are created, we will analyze their characteristics and determine whether they represent:
-- Bull Markets
-- Bear Markets
-- Sideways Markets
-- Other Markets Behaivor
-
+**Why this matters to us:**  
+K-Means will be used to identify market regimes. Once clusters are formed, we will analyze their behavior to interpret whether they represent:
+- Bull markets
+- Bear markets
+- Sideways markets
+- Other market behaviors
