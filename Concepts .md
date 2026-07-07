@@ -191,3 +191,14 @@ K-Means will be used to identify market regimes. Once clusters are formed, we wi
 - Bear markets
 - Sideways markets
 - Other market behaviors
+
+## 11. Why Dimensionality Reduction Is Needed
+
+Financial features often contain overlapping information. For example, returns and momentum are both related to price movement, while volatility may partially reflect recent market behavior.
+
+When several variables describe similar information, machine learning algorithms can become less efficient and more sensitive to noise.
+
+Dimensionality reduction aims to summarize the information contained in multiple correlated features using a smaller set of variables while preserving most of the original variation.
+
+**Why this matters to us:**
+PCA allows us to simplify the feature space before clustering, reducing redundancy while retaining the information needed to identify market regimes.
