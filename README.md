@@ -12,6 +12,19 @@ Rather than predicting future prices directly, the project seeks to discover rec
 
 ---
 
+## Key Features
+
+- End-to-end financial data science pipeline.
+- Automated feature engineering for financial time series.
+- Configurable multi-asset architecture.
+- PCA-based dimensionality reduction.
+- K-Means market regime detection.
+- Financial interpretation of identified regimes.
+- Publication-quality visualizations.
+- Modular and extensible project structure.
+
+---
+
 ## Research Question
 
 Can unsupervised machine learning identify meaningful market regimes in cryptocurrency price behavior using statistical and technical features?
@@ -96,7 +109,7 @@ Unsupervised learning techniques are used to group observations with similar beh
 
 The objective is to discover naturally occurring market states without predefined labels.
 
-### 6. Market Regime Detection
+### 6. Market Regime Characterization
 
 Clusters are analyzed and interpreted as meaningful market regimes such as:
 
@@ -140,7 +153,8 @@ Financial-Market-Regime-Detection-System/
 │
 ├── figures/
 │
-├── config.py
+├── config/
+│   └── config.py
 │
 └── README.md
 ```
