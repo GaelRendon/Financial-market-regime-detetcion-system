@@ -212,3 +212,18 @@ The optimal number of clusters is often identified at the point where adding add
 
 **Why this matter to us:**
 Rather than selecting the number of clusters arbitrarily, we use the Elbow Method as one piece of evidence for determining an appropriate clustering solution.
+
+## 13. What the Silhouette Score Measures
+
+The Silhouette Score evaluates how well observations fit within their assigned cluster.
+
+The score ranges from -1 to 1:
+
+- Close to 1: Well-separated clusters
+- Around 0: Overlapping clusters
+- Below 0: Possible misclassification
+
+Unlike the Elbow Method, which focuses on compactness, the Silhouette Score also considers how distinct clusters are from one another.
+
+**Why this matters to us:**
+We combine the Silhouette Score with the Elbow Method to select a clustering solution that balances compactness and separation.
