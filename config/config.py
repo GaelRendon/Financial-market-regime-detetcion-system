@@ -38,15 +38,17 @@ PCA_VARIANCE_THRESHOLD = 0.95
 # CLUSTERING CONFIGURATION
 # ==========================================
 
-# The clustering algorithm to use. In this specific case.
+# Clustering algorithm used throughout the project.
 CLUSTERING_ALGORITHM = "kmeans"
 
-# The number of clusters with a more extended ones
+# Range of candidate clusters evaluated during model selection.
 MIN_CLUSTERS = 2
 MAX_CLUSTERS = 10
 
-# Optimal number of clusters
+# Final number of clusters selected after the
+# Elbow Method and Silhouette Score analyses.
 OPTIMAL_N_CLUSTERS = None
+
 
 # This is used to ensure consistency of the results
 RANDOM_SEED = 42
@@ -56,11 +58,7 @@ RANDOM_SEED = 42
 # ==========================================
 
 RAW_DATA_PATH = "../data/raw"
-
 PROCESSED_DATA_PATH = "../data/processed"
-
 FIGURES_PATH = "../outputs/figures"
-
 REPORTS_PATH = "../outputs/reports"
-
 MODELS_PATH = "../outputs/models"
