@@ -202,3 +202,13 @@ Dimensionality reduction aims to summarize the information contained in multiple
 
 **Why this matters to us:**
 PCA allows us to simplify the feature space before clustering, reducing redundancy while retaining the information needed to identify market regimes.
+
+## 12. What the Elbow Method Does
+The Elbow Method helps estimate the appropriate number of clusters for K-Means. 
+
+It measures the Within-Clusters Sum of Squares (WCSS) for different values of K. As K increases, WCSS decreases because observations are grouped more precisely.
+
+The optimal number of clusters is often identified at the point where adding additional clusters provides only a small improvement, producing an "elbow" in the curve.
+
+**Why this matter to us:**
+Rather than selecting the number of clusters arbitrarily, we use the Elbow Method as one piece of evidence for determining an appropriate clustering solution.
