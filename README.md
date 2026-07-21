@@ -1,6 +1,6 @@
 # Financial Market Regime Detection System
 
-End-to-end data science project that identifies market regimes in financial assets through feature engineering, statistical analysis, dimensionality reduction, clustering, and interactive visualization.
+End-to-end financial data science project that identifies and characterizes market regimes through feature engineering, statistical analysis, dimensionality reduction, unsupervised machine learning, and financial interpretation.
 
 ---
 
@@ -30,6 +30,94 @@ Rather than predicting future prices directly, the project seeks to discover rec
 Can unsupervised machine learning identify meaningful market regimes in cryptocurrency price behavior using statistical and technical features?
 
 ---
+## Research Questions by Notebook
+
+The project is organized as a sequence of research notebooks, where each notebook addresses a specific analytical question while contributing to the overall objective of identifying and understanding financial market regimes.
+
+### Notebook 1 – Data Collection
+
+**Main Question**
+
+> How can historical financial market data be collected in a reproducible and scalable manner?
+
+Questions addressed:
+
+- How is historical OHLCV data obtained from Yahoo Finance?
+- How can data collection be configured for different financial assets?
+- How should raw market data be organized for reproducible analysis?
+
+---
+
+### Notebook 2 – Exploratory Data Analysis
+
+**Main Question**
+
+> What are the statistical characteristics of the collected financial data?
+
+Questions addressed:
+
+- Is the dataset complete and reliable?
+- What are the main statistical properties of the market?
+- What initial patterns can be identified before feature engineering?
+
+---
+
+### Notebook 3 – Feature Engineering
+
+**Main Question**
+
+> Which engineered financial features best describe market behavior?
+
+Questions addressed:
+
+- How can returns, volatility, and momentum be quantified?
+- Why are engineered features preferable to raw prices?
+- How do these features represent different aspects of market dynamics?
+
+---
+
+### Notebook 4 – Principal Component Analysis
+
+**Main Question**
+
+> Can the feature space be simplified while preserving most of its information?
+
+Questions addressed:
+
+- How much variance is explained by the principal components?
+- Does dimensionality reduction improve clustering?
+- What information is retained after PCA?
+
+---
+
+### Notebook 5 – Market Regime Identification
+
+**Main Question**
+
+> Can unsupervised learning identify meaningful financial market regimes?
+
+Questions addressed:
+
+- How many market regimes exist?
+- What statistical characteristics define each regime?
+- How can clusters be interpreted as recognizable market conditions?
+
+---
+
+### Notebook 6 – Market Regime Dynamics
+
+**Main Question**
+
+> How do identified market regimes evolve over time?
+
+Questions addressed:
+
+- How do market regimes change throughout history?
+- Which transitions occur most frequently?
+- Which market regimes persist the longest?
+- What do these temporal dynamics reveal about financial market behavior?
+
+----
 
 ## Design Principles
 
