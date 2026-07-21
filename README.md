@@ -6,9 +6,9 @@ End-to-end financial data science project that identifies and characterizes mark
 
 ## Project Objective
 
-The goal of this project is to identify and characterize financial market regimes using statistical features derived from historical price data.
+The goal of this project is to identify, characterize, and predict financial market regimes using statistical features derived from historical price data.
 
-Rather than predicting future prices directly, the project seeks to discover recurring market states such as bullish, bearish, high-volatility, and sideways conditions through unsupervised machine learning techniques.
+Rather than predicting future prices directly, the project seeks to discover recurring market states such as bullish, bearish, high-volatility, and sideways conditions through unsupervised machine learning techniques, and subsequently forecast the evolution of these market regimes to support financial decision-making.
 
 ---
 
@@ -27,7 +27,7 @@ Rather than predicting future prices directly, the project seeks to discover rec
 
 ## Research Question
 
-Can unsupervised machine learning identify meaningful market regimes in cryptocurrency price behavior using statistical and technical features?
+Can statistical feature engineering and machine learning identify, characterize, and predict meaningful financial market regimes using historical cryptocurrency price data?
 
 ---
 ## Research Questions by Notebook
@@ -119,6 +119,35 @@ Questions addressed:
 
 ----
 
+### Notebook 7 – Market Regime Forecasting
+
+**Main Question**
+
+> Can future market regimes be predicted using historical regime information and engineered financial features?
+
+Questions addressed:
+
+- Can the current market regime help predict the next market regime?
+- Which historical features contribute most to forecasting future regimes?
+- How accurately can machine learning models predict future market states?
+- How does regime forecasting differ from traditional price prediction?
+
+----
+
+### Notebook 8 – Strategy Evaluation & Backtesting
+
+**Main Question**
+
+> Do predicted market regimes improve investment decisions and trading performance?
+
+Questions addressed:
+
+- Can predicted market regimes be transformed into trading signals?
+- How does a regime-based strategy compare with a buy-and-hold approach?
+- Which market regimes generate the highest and lowest returns?
+- Does regime forecasting provide practical value for investment decision-making?
+
+----
 ## Design Principles
 
 The project is being developed with the following objectives:
@@ -208,6 +237,18 @@ Clusters are analyzed and interpreted as meaningful market regimes such as:
 
 The resulting framework provides a systematic view of market behavior through time.
 
+### 7. Market Regime Forecasting
+
+Machine learning models are trained to predict future market regimes using historical market information and engineered features.
+
+The objective is to forecast the evolution of market conditions rather than future asset prices, allowing investors to anticipate changes in market behavior.
+
+### 8. Strategy Evaluation & Backtesting
+
+The predicted market regimes are incorporated into a rule-based investment strategy.
+
+Performance metrics such as cumulative return, drawdown, volatility, and Sharpe ratio are used to evaluate whether regime-aware investment decisions outperform benchmark strategies.
+
 ---
 
 ## Repository Structure
@@ -221,14 +262,18 @@ Financial-Market-Regime-Detection-System/
 │   ├── 03_feature_engineering.ipynb
 │   ├── 04_pca.ipynb
 │   ├── 05_clustering.ipynb
-│   └── 06_market_regime_detection.ipynb
+|   ├── 06_market_regime_detection.ipynb
+|   ├── 07_market_regime_forecasting.ipynb
+│   └── 08_strategy_evaluation_&_backtesting.ipynb
 │
 ├── src/
 │   ├── data/
 │   ├── features/
 │   ├── preprocessing/
 │   ├── clustering/
-│   └── regime_detection/
+│   ├── regime_detection/
+│   ├── regime_forecasting/
+│   └── backtesting/
 │
 ├── data/
 │   ├── raw/
@@ -251,7 +296,6 @@ Financial-Market-Regime-Detection-System/
 
 ## Project Workflow
 
-```text
 Raw Market Data
         ↓
 Data Collection
@@ -260,14 +304,15 @@ Exploratory Data Analysis
         ↓
 Feature Engineering
         ↓
-PCA
+Principal Component Analysis
         ↓
-Clustering
+Market Regime Identification
         ↓
-Market Regime Detection
+Market Regime Dynamics
         ↓
-Interpretation & Visualization
-```
+Market Regime Forecasting
+        ↓
+Strategy Evaluation & Backtesting
 
 ---
 
