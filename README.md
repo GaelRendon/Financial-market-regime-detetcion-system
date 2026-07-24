@@ -6,9 +6,9 @@ End-to-end financial data science project that identifies and characterizes mark
 
 ## Project Objective
 
-The goal of this project is to identify, characterize, and predict financial market regimes using statistical features derived from historical price data.
+The goal of this project is to identify, characterize, and forecast financial market regimes using statistical features derived from historical price data.
 
-Rather than predicting future prices directly, the project seeks to discover recurring market states such as bullish, bearish, high-volatility, and sideways conditions through unsupervised machine learning techniques, and subsequently forecast the evolution of these market regimes to support financial decision-making.
+Rather than predicting future asset prices directly, the project seeks to discover recurring market states such as bullish, bearish, high-volatility, and sideways conditions through unsupervised machine learning techniques. These identified regimes are then used to forecast future market behavior and ultimately generate interpretable, data-driven recommendations that support financial decision-making.
 
 ---
 
@@ -20,6 +20,9 @@ Rather than predicting future prices directly, the project seeks to discover rec
 - PCA-based dimensionality reduction.
 - K-Means market regime detection.
 - Financial interpretation of identified regimes.
+- Market regime forecasting using machine learning.
+- Confidence-based prediction visualization.
+- Automated recommendation engine for market decisions.
 - Publication-quality visualizations.
 - Modular and extensible project structure.
 
@@ -27,7 +30,7 @@ Rather than predicting future prices directly, the project seeks to discover rec
 
 ## Research Question
 
-Can statistical feature engineering and machine learning identify, characterize, and predict meaningful financial market regimes using historical cryptocurrency price data?
+Can machine learning identify, characterize, and forecast meaningful financial market regimes using historical market behavior, and can those forecasts be transformed into actionable investment recommendations?
 
 ---
 ## Research Questions by Notebook
