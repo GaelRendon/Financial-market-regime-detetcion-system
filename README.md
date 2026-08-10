@@ -174,7 +174,7 @@ However, the project architecture was designed to support multiple cryptocurrenc
 
 ### Current Experiments
 
-- BTC-USD
+- BTC-USD (Information uploaded on 08/10/2026 )
 
 ### Supported Architecture
 
