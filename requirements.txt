@@ -1,6 +1,8 @@
 yfinance
-pandas 
+pandas
 matplotlib
 scikit-learn
 joblib
 seaborn
+streamlit
+plotly

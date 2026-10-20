@@ -343,3 +343,55 @@ The source code contains:
 
 This separation improves reproducibility, maintainability, and scalability.
 
+
+
+---
+
+## Interactive Application & Power BI Integration
+
+The project includes an interactive web dashboard built with **Streamlit** and **Plotly** to provide real-time regime inference and actionable trading recommendations for any cryptocurrency and fiat currency pair.
+
+### Launch the Application
+
+You can launch the dashboard using any of the following methods depending on your environment:
+
+#### 1. Git Bash
+
+**Option A (Direct execution):**
+```bash
+./pvenv/Scripts/streamlit run app.py
+```
+
+**Option B (Activate environment first):**
+```bash
+source pvenv/Scripts/activate
+streamlit run app.py
+```
+
+#### 2. Windows PowerShell / Command Prompt (CMD)
+
+**Option A (Direct execution):**
+```powershell
+pvenv\Scripts\streamlit run app.py
+```
+
+**Option B (Activate environment first):**
+```powershell
+.\pvenv\Scripts\Activate.ps1   # PowerShell
+# or: call pvenv\Scripts\activate.bat   # CMD
+streamlit run app.py
+```
+
+#### 3. Windows Explorer (1-Click)
+
+Simply double-click the [`run_app.bat`](file:///c:/Documentos/Proyectos%20personales/Financial-market-regime-detetcion-system/run_app.bat) file located in the project root directory.
+
+Once launched, open your browser at `http://localhost:8501`.
+
+### Dashboard Capabilities:
+- **Dynamic Asset & Fiat Selection:** Analyze any crypto pair (e.g., `BTC-USD`, `ETH-MXN`, `SOL-EUR`).
+- **Live Quantitative Signals:** Visual recommendation badge with position sizing (100% Invested, 50% Exposure, or 100% Cash) and risk rationale.
+- **Probabilistic Forecasting:** Real-time multi-class regime confidence distribution for tomorrow's market state.
+- **Interactive Visualizations:** Candlestick regime overlays, daily return tail bounds, 30-day rolling volatility, and 14-day momentum.
+- **Markov Transition Dynamics:** Empirical transition matrix heatmap and expected duration persistence statistics.
+- **Power BI / Excel Ready:** 1-click export of the analyzed regime dataset formatted for direct import into Power BI or Excel dashboards.
