@@ -174,7 +174,7 @@ However, the project architecture was designed to support multiple cryptocurrenc
 
 ### Current Experiments
 
-- BTC-USD (Information uploaded on 08/10/2026 )
+- BTC-USD (Information uploaded on 08/10/2026)
 
 ### Supported Architecture
 
@@ -265,9 +265,9 @@ Financial-Market-Regime-Detection-System/
 │   ├── 03_feature_engineering.ipynb
 │   ├── 04_pca.ipynb
 │   ├── 05_clustering.ipynb
-|   ├── 06_market_regime_detection.ipynb
+|   ├── 06_market_regime_dynamics.ipynb
 |   ├── 07_market_regime_forecasting.ipynb
-│   └── 08_strategy_evaluation_&_backtesting.ipynb
+│   └── 08_strategy_evaluation.ipynb
 │
 ├── src/
 │   ├── data/
