@@ -42,6 +42,6 @@ coverage/
 *.swo
 *.tmp
 
-# Don't use data
+# Don't use data and outputs
 data/
 outputs/
