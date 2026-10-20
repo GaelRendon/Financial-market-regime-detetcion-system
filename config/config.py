@@ -47,11 +47,32 @@ MAX_CLUSTERS = 10
 
 # Final number of clusters selected after the
 # Elbow Method and Silhouette Score analyses.
-OPTIMAL_N_CLUSTERS = None
+# This value is set programmatically in notebook 05.
+OPTIMAL_N_CLUSTERS = 4
 
 
 # This is used to ensure consistency of the results
 RANDOM_SEED = 42
+
+# ==========================================
+# FORECASTING CONFIGURATION
+# ==========================================
+
+# Train-test split ratio for the forecasting model.
+TEST_SIZE = 0.2
+
+# ==========================================
+# BACKTESTING CONFIGURATION
+# ==========================================
+
+# Initial hypothetical capital for backtesting.
+INITIAL_CAPITAL = 1000
+
+# Annual risk-free rate used for Sharpe Ratio calculation.
+RISK_FREE_RATE = 0.0
+
+# Approximate number of trading days per year (crypto trades 365 days).
+TRADING_DAYS_PER_YEAR = 365
 
 # ==========================================
 # OUTPUT CONFIGURATION
