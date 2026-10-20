@@ -1,6 +1,6 @@
 # Concepts that you should know to understand this project:
 
-## 1. What OHLCV Data Means?
+## 1. What Does OHLCV Data Mean?
 OHLCV refers to the standard format for financial price data. It helps us track how a stock or crypto asset moved over a specific timeframe, and the letters stand for:
 
 - O (Open): The price at the start of the timeframe.
@@ -210,7 +210,7 @@ It measures the Within-Clusters Sum of Squares (WCSS) for different values of K.
 
 The optimal number of clusters is often identified at the point where adding additional clusters provides only a small improvement, producing an "elbow" in the curve.
 
-**Why this matter to us:**
+**Why this matters to us:**
 Rather than selecting the number of clusters arbitrarily, we use the Elbow Method as one piece of evidence for determining an appropriate clustering solution.
 
 ## 13. What the Silhouette Score Measures
@@ -227,3 +227,118 @@ Unlike the Elbow Method, which focuses on compactness, the Silhouette Score also
 
 **Why this matters to us:**
 We combine the Silhouette Score with the Elbow Method to select a clustering solution that balances compactness and separation.
+
+
+---
+
+## 14. What a Transition Matrix Represents
+
+A transition matrix captures the probability of moving from one market regime to another over consecutive time steps.
+
+Each row represents the current regime, and each column represents the next regime. The values indicate the likelihood of transitioning between states:
+
+| From \ To | Bull | Bear | High Volatility | Consolidation |
+|-----------|------|------|-----------------|---------------|
+| Bull | 0.85 | 0.05 | 0.05 | 0.05 |
+| Bear | 0.10 | 0.70 | 0.15 | 0.05 |
+| ... | ... | ... | ... | ... |
+
+This concept is closely related to Markov Chains, where the next state depends only on the current state, not on the history of previous states.
+
+**Why this matters to us:**
+Transition matrices allow us to quantify how likely it is for the market to shift between regimes, providing insights into market stability and regime persistence.
+
+---
+
+## 15. What Regime Persistence Means
+
+Regime persistence refers to the tendency of a market regime to remain active over multiple consecutive time periods before transitioning to a different regime.
+
+A highly persistent regime (e.g., a bull market lasting several months) suggests stable market conditions, while low persistence (frequent switching between regimes) may indicate market uncertainty or structural transitions.
+
+Key metrics include:
+- **Average duration:** How many consecutive days a regime typically lasts.
+- **Self-transition probability:** The diagonal values in a transition matrix, representing the probability that a regime continues into the next period.
+
+**Why this matters to us:**
+Understanding persistence helps us evaluate the reliability of regime-based trading strategies. Strategies perform better when regimes are stable and persist long enough for actionable decisions.
+
+---
+
+## 16. What Time-Series Cross-Validation Is
+
+In traditional machine learning, data is randomly split into training and test sets. However, financial data is ordered in time, and random splits would allow the model to "see the future" during training.
+
+Time-series cross-validation respects the temporal order of the data:
+- Training data always comes before test data.
+- The training window expands (or slides) forward in time.
+- Each fold evaluates the model on a future time period it has never seen.
+
+**Why this matters to us:**
+When we train classification models to forecast market regimes, we must use time-series cross-validation to avoid data leakage and obtain realistic performance estimates.
+
+---
+
+## 17. What Classification Models Do in This Context
+
+Classification models predict which category (class) a new observation belongs to. In this project, the classes are the market regimes identified by clustering.
+
+Common models used include:
+- **Random Forest:** An ensemble of decision trees that votes on the most likely regime.
+- **Gradient Boosting:** Sequentially builds decision trees that correct the errors of previous ones.
+- **Logistic Regression:** A linear model that estimates regime probabilities.
+
+**Why this matters to us:**
+Instead of relying solely on clustering (which labels historical data), classification models allow us to forecast which regime the market is likely to enter next based on the most recent features.
+
+---
+
+## 18. What the Sharpe Ratio Measures
+
+The Sharpe Ratio is a risk-adjusted performance metric that evaluates how much excess return an investment generates per unit of risk taken.
+
+$$
+\text{Sharpe Ratio} = \frac{R_p - R_f}{\sigma_p}
+$$
+
+Where:
+- $R_p$ = Portfolio return
+- $R_f$ = Risk-free rate (e.g., Treasury bond yield)
+- $\sigma_p$ = Standard deviation of portfolio returns
+
+A higher Sharpe Ratio indicates better risk-adjusted performance. A ratio above 1.0 is generally considered good, and above 2.0 is very good.
+
+**Why this matters to us:**
+When evaluating our regime-based trading strategy, the Sharpe Ratio tells us whether the strategy's returns are worth the risk taken, and allows comparison against a simple buy-and-hold approach.
+
+---
+
+## 19. What Maximum Drawdown Means
+
+Maximum Drawdown measures the largest peak-to-trough decline in the value of a portfolio before a new peak is achieved.
+
+$$
+\text{Max Drawdown} = \frac{\text{Trough Value} - \text{Peak Value}}{\text{Peak Value}}
+$$
+
+It represents the worst-case loss an investor would have experienced during the investment period.
+
+**Why this matters to us:**
+Even a strategy with high returns may be undesirable if it experiences extreme drawdowns. Maximum drawdown helps us assess the downside risk of our regime-based strategy compared to buy-and-hold.
+
+---
+
+## 20. What Cumulative Returns Represent
+
+Cumulative returns show the total percentage gain or loss of a portfolio over time, starting from the initial investment.
+
+They are calculated by compounding individual period returns:
+
+$$
+\text{Cumulative Return}_t = \prod_{i=1}^{t}(1 + r_i) - 1
+$$
+
+A cumulative return chart visually tracks the growth of an investment over the entire analysis period.
+
+**Why this matters to us:**
+We use cumulative return plots to compare the total performance of our regime-based trading strategy against a passive buy-and-hold approach over the same time period.
