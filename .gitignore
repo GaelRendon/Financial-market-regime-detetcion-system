@@ -44,4 +44,5 @@ coverage/
 
 # Don't use data and outputs
 data/
+datas/
 outputs/
