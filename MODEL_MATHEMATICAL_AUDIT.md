@@ -267,12 +267,21 @@ To guarantee execution feasibility without look-ahead bias, the portfolio weight
 $$w_t = \Phi(\hat{S}_{t \mid t-1})$$
 where $\hat{S}_{t \mid t-1} \in \mathcal{F}_{t-1}$.
 
-### 8.3 Return and Portfolio Dynamics
-The strategy return at day $t$ is:
-$$R_t^{\text{strat}} = w_t \cdot R_t^{\text{mkt}}$$
-The compounded portfolio equity curve with initial capital $V_0 = 1000$ is:
+### 8.3 Return Dynamics with Friction (Turnover, Commission & Slippage)
+Real-world execution encounters transactional friction at every position rebalancing event.
+Let the portfolio turnover $\Delta w_t$ be the absolute change in market exposure:
+$$\Delta w_t = |w_t - w_{t-1}| \in [0, 1]$$
+Given transaction commission fee $c_{\text{fee}}$ (e.g., $10\text{ bps} = 0.0010$) and bid-ask slippage $c_{\text{slip}}$ (e.g., $5\text{ bps} = 0.0005$):
+$$c_{\text{total}} = c_{\text{fee}} + c_{\text{slip}}$$
+The instantaneous transaction friction cost drag $C_t$ is:
+$$C_t = \Delta w_t \cdot c_{\text{total}}$$
+The **gross** strategy return is:
+$$R_t^{\text{gross}} = w_t \cdot R_t^{\text{mkt}}$$
+The **net** strategy return after transaction friction is:
+$$R_t^{\text{strat}} = R_t^{\text{gross}} - C_t = w_t \cdot R_t^{\text{mkt}} - |w_t - w_{t-1}| \cdot (c_{\text{fee}} + c_{\text{slip}})$$
+The compounded net portfolio equity curve with initial capital $V_0 = 1000$ is:
 $$V_t = V_0 \prod_{\tau=1}^t (1 + R_\tau^{\text{strat}})$$
-Benchmark Buy-and-Hold portfolio equity:
+Benchmark Buy-and-Hold portfolio equity (passive zero-turnover reference):
 $$V_t^{\text{bh}} = V_0 \prod_{\tau=1}^t (1 + R_\tau^{\text{mkt}})$$
 
 ### 8.4 Formal Financial Metric Definitions

@@ -342,3 +342,25 @@ A cumulative return chart visually tracks the growth of an investment over the e
 
 **Why this matters to us:**
 We use cumulative return plots to compare the total performance of our regime-based trading strategy against a passive buy-and-hold approach over the same time period.
+
+
+---
+
+## 21. What Transaction Costs and Slippage Mean in Quantitative Backtesting
+
+In theoretical models, buying or selling assets is often assumed to be instantaneous and cost-free. In real-world quantitative trading, every portfolio adjustment incurs execution friction:
+
+1. **Brokerage/Exchange Commission Fees ($c_{\text{fee}}$):** The fee paid to the venue for executing a trade (typically 10 basis points, or 0.10%, for spot crypto takers).
+2. **Bid-Ask Spread Slippage ($c_{\text{slip}}$):** The difference between the quoted mid-price and the actual executed market price due to order book depth.
+3. **Portfolio Turnover ($\Delta w_t$):** The fraction of total portfolio value reallocated across time:
+   $$
+   \Delta w_t = |w_t - w_{t-1}|
+   $$
+
+The net strategy return after subtracting friction drag is:
+$$
+R_t^{\text{net}} = w_t \cdot R_t^{\text{mkt}} - \Delta w_t \cdot (c_{\text{fee}} + c_{\text{slip}})
+$$
+
+**Why this matters to us:**
+Accounting for turnover and trading costs prevents the model from generating false positive performance or trading excessively on minor noise, ensuring that reported returns reflect achievable live performance.

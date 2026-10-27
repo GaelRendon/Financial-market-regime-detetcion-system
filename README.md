@@ -137,7 +137,7 @@ Questions addressed:
 
 ----
 
-### Notebook 8 – Strategy Evaluation & Backtesting
+### Notebook 8 – Strategy Evaluation & Backtesting (Net of Fees & Slippage)
 
 **Main Question**
 
@@ -246,7 +246,7 @@ Machine learning models are trained to predict future market regimes using histo
 
 The objective is to forecast the evolution of market conditions rather than future asset prices, allowing investors to anticipate changes in market behavior.
 
-### 8. Strategy Evaluation & Backtesting
+### 8. Strategy Evaluation & Backtesting (Net of Fees & Slippage)
 
 The predicted market regimes are incorporated into a rule-based investment strategy.
 
@@ -315,7 +315,7 @@ Market Regime Dynamics
         ↓
 Market Regime Forecasting
         ↓
-Strategy Evaluation & Backtesting
+Strategy Evaluation & Backtesting (Net of Fees & Slippage)
 
 ---
 

@@ -74,6 +74,13 @@ RISK_FREE_RATE = 0.0
 # Approximate number of trading days per year (crypto trades 365 days).
 TRADING_DAYS_PER_YEAR = 365
 
+# Transaction fees in basis points (1 bps = 0.01% = 0.0001).
+# 10 bps is standard spot taker fee on major exchanges (Binance, Coinbase, Kraken).
+TRANSACTION_FEE_BPS = 10.0
+
+# Estimated execution slippage in basis points.
+SLIPPAGE_BPS = 5.0
+
 # ==========================================
 # OUTPUT CONFIGURATION
 # ==========================================

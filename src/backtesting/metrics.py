@@ -1,5 +1,6 @@
 """
-Performance and risk-adjusted metrics module for strategy evaluation.
+Performance and risk-adjusted metrics module for strategy evaluation
+with transaction cost breakdown and turnover metrics.
 """
 
 from typing import Dict
@@ -8,7 +9,7 @@ import pandas as pd
 
 
 class PerformanceMetrics:
-    """Computes cumulative equity, annualized returns, volatility, Sharpe ratio, and drawdown."""
+    """Computes cumulative equity, annualized returns, volatility, Sharpe ratio, drawdown, and trading costs."""
 
     def __init__(
         self,
@@ -26,6 +27,10 @@ class PerformanceMetrics:
         df["Strategy_Portfolio"] = (
             self.initial_capital * (1.0 + df["Strategy_Return"]).cumprod()
         )
+        if "Gross_Strategy_Return" in df.columns:
+            df["Gross_Strategy_Portfolio"] = (
+                self.initial_capital * (1.0 + df["Gross_Strategy_Return"]).cumprod()
+            )
         df["Buy_Hold_Portfolio"] = (
             self.initial_capital * (1.0 + df["Market_Return"]).cumprod()
         )
@@ -33,7 +38,7 @@ class PerformanceMetrics:
 
     def evaluate_performance(self, backtest_df: pd.DataFrame) -> pd.DataFrame:
         """
-        Calculate full performance comparison summary table.
+        Calculate full performance comparison summary table including friction metrics.
         """
         df = self.compute_equity_curves(backtest_df)
 
@@ -67,15 +72,21 @@ class PerformanceMetrics:
         strat_max_dd = strat_dd.min()
         bh_max_dd = bh_dd.min()
 
+        # 6. Cumulative Friction Impact
+        total_turnover = float(df["Turnover"].sum()) if "Turnover" in df.columns else 0.0
+        cumulative_friction_cost_pct = (float(df["Friction_Cost"].sum()) * 100.0) if "Friction_Cost" in df.columns else 0.0
+
         comparison_df = pd.DataFrame({
             "Metric": [
                 "Initial Capital ($)",
                 "Final Portfolio Value ($)",
-                "Total Return (%)",
-                "Annualized Return (%)",
+                "Total Return (Net) (%)",
+                "Annualized Return (Net CAGR) (%)",
                 "Annualized Volatility (%)",
-                "Sharpe Ratio",
-                "Maximum Drawdown (%)"
+                "Sharpe Ratio (Net)",
+                "Maximum Drawdown (%)",
+                "Cumulative Turnover (Shares/Units)",
+                "Total Friction Cost Drag (%)"
             ],
             "Forecasting-Based Strategy": [
                 self.initial_capital,
@@ -84,7 +95,9 @@ class PerformanceMetrics:
                 strat_cagr,
                 strat_ann_vol,
                 strat_sharpe,
-                strat_max_dd
+                strat_max_dd,
+                total_turnover,
+                cumulative_friction_cost_pct
             ],
             "Buy & Hold": [
                 self.initial_capital,
@@ -93,7 +106,9 @@ class PerformanceMetrics:
                 bh_cagr,
                 bh_ann_vol,
                 bh_sharpe,
-                bh_max_dd
+                bh_max_dd,
+                0.0,
+                0.0
             ]
         })
 

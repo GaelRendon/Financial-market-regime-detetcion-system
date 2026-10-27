@@ -140,8 +140,11 @@ class RegimeDetectionPipeline:
         forecaster.save_model(self.ticker)
         print(f"[6/7] Forecasting Model Accuracy: {eval_metrics['accuracy']:.4f}")
 
-        # 7. Backtesting
-        strategy = RegimeStrategy()
+        # 7. Backtesting with Friction Costs (Fees + Slippage)
+        strategy = RegimeStrategy(
+            transaction_fee_bps=TRANSACTION_FEE_BPS,
+            slippage_bps=SLIPPAGE_BPS
+        )
         backtest_df = strategy.run_backtest(raw_df, regime_df)
 
         metrics = PerformanceMetrics(
