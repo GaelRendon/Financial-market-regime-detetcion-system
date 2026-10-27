@@ -281,14 +281,32 @@ $$\mathcal{L}_{\text{CE}} = - \frac{1}{N_{\text{test}}} \sum_{t \in \mathcal{D}_
 
 ## 8. Quantitative Backtesting & Statistical Financial Metrics
 
-### 8.1 Signal-to-Position Mapping Operator
-Let $\Phi: \mathcal{S} \to [0, 1]$ define the deterministic portfolio exposure mapping:
+### 8.1 Signal-to-Position Mapping Operator & Dynamic Sizing
+The allocation engine supports three mathematical sizing regimes:
+
+#### 1. Discrete Hard Mapping
+Let $\Phi: \mathcal{S} \to [0, 1]$ define the deterministic step allocation:
 $$\Phi(S) = \begin{cases} 
 1.0 & \text{if } S = \text{Moderate-Volatility Bullish} \\
 1.0 & \text{if } S = \text{Low-Volatility Neutral} \\
 0.5 & \text{if } S = \text{High-Volatility Transition} \\
 0.0 & \text{if } S = \text{High-Volatility Bearish}
 \end{cases}$$
+
+#### 2. Continuous Confidence-Weighted Sizing
+Given the model's posterior probability distribution $\mathbf{p}_t = [p_{t,1}, \dots, p_{t,K}]^T \in \Delta^K$ and base weights $\mathbf{w}_{\text{base}}$:
+$$w_t^{\text{conf}} = \sum_{k=1}^K p_{t,k} \cdot \Phi(S_k) = \mathbf{w}_{\text{base}}^T \mathbf{p}_t$$
+This guarantees that exposure scales continuously with model conviction, mitigating aggressive boundary switching.
+
+#### 3. Fractional Kelly Growth Maximization
+For logarithmic utility growth maximization under regime uncertainty, the optimal capital fraction is:
+$$f^*(S_t) = \lambda \cdot \frac{\mathbb{E}[R_t \mid \mathcal{F}_t] - R_f}{\text{Var}[R_t \mid \mathcal{F}_t]}$$
+where $\lambda \in (0, 1]$ is the fractional Kelly parameter ($\lambda = 0.5$ for Half-Kelly), and:
+$$\mathbb{E}[R_t \mid \mathcal{F}_t] = \sum_{k=1}^K p_{t,k} \mu_k, \quad \text{Var}[R_t \mid \mathcal{F}_t] = \sum_{k=1}^K p_{t,k} \left( \sigma_k^2 + (\mu_k - \mathbb{E}[R_t])^2 \right)$$
+
+#### 4. Turnover Damping Filter (Exponential Smoothing)
+To prevent excessive transaction fees from noisy probability fluctuations:
+$$w_t^* = (1 - \alpha) w_{t-1}^* + \alpha w_t^{\text{target}}, \quad \alpha \in (0, 1]$$
 
 ### 8.2 Causal Execution Operator (Lagging)
 To guarantee execution feasibility without look-ahead bias, the portfolio weight $w_t$ applied to the market return $R_t^{\text{mkt}}$ between $t-1$ and $t$ is determined strictly by the signal at $t-1$:

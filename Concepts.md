@@ -383,3 +383,35 @@ A Hidden Markov Model goes one step further: it connects these soft probabilitie
 
 **Why this matters to us:**
 Soft clustering allows our trading models to measure regime uncertainty and avoid making aggressive, binary bets when the market is hovering near a boundary between two states.
+
+
+---
+
+## 23. Position Sizing: Discrete vs. Confidence-Weighted vs. The Kelly Criterion
+
+A trading system consists of two parts: **direction** (what to trade) and **sizing** (how much capital to risk).
+
+### 1. Discrete Fixed Sizing (The Baseline)
+Allocates fixed capital chunks based solely on the winning label:
+- 100% in Bullish or Neutral
+- 50% in Transition
+- 0% in Bearish
+
+*Flaw:* If the model is 51% Bullish and 49% Bearish, it still risks 100% of the portfolio.
+
+### 2. Confidence-Weighted Sizing
+Multiplies the portfolio allocation by the exact probability of each regime:
+$$
+w_t = 1.0 \times P(\text{Bull}) + 1.0 \times P(\text{Neut}) + 0.5 \times P(\text{Trans}) + 0.0 \times P(\text{Bear})
+$$
+When confidence is high (90% Bullish), it invests heavily. When the model is uncertain (50% Bullish, 50% Bearish), it automatically dials down exposure to 50% to protect capital.
+
+### 3. The Kelly Criterion
+A mathematical formula from information theory (John Kelly, 1956) that calculates the exact fraction of wealth $f^*$ to invest in order to maximize the long-term compound growth rate of capital:
+$$
+f^* = \frac{\text{Expected Return} - R_f}{\text{Variance of Returns}}
+$$
+In volatile crypto markets, we use **Fractional Kelly (Half-Kelly)** to reduce volatility while harvesting compounding gains.
+
+**Why this matters to us:**
+Continuous sizing and smoothing dampen portfolio turnover, substantially reducing transaction fees and preventing whipsaws during regime transitions.

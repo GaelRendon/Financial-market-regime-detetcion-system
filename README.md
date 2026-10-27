@@ -276,7 +276,7 @@ Financial-Market-Regime-Detection-System/
 │   ├── clustering/              # Hard K-Means, Soft GMM, and Gaussian HMM
 │   ├── regime_detection/
 │   ├── regime_forecasting/
-│   └── backtesting/
+│   └── backtesting/             # Discrete, Confidence-Weighted & Kelly Position Sizing
 │
 ├── data/
 │   ├── raw/
