@@ -273,7 +273,7 @@ Financial-Market-Regime-Detection-System/
 │   ├── data/
 │   ├── features/
 │   ├── preprocessing/
-│   ├── clustering/
+│   ├── clustering/              # Hard K-Means, Soft GMM, and Gaussian HMM
 │   ├── regime_detection/
 │   ├── regime_forecasting/
 │   └── backtesting/

@@ -183,6 +183,34 @@ For an observation $\mathbf{y}_i \in C_k$:
 $$K^* = \arg\max_{K \in [K_{\min}, K_{\max}]} \bar{s}(K) \quad \text{subject to cluster stability and non-degeneracy}$$
 For $K \in [2, 10]$, $K^* = 4$ yields the global maximum $\bar{s}(4) = 0.318$.
 
+### 5.4 Soft Clustering & Generative Regime Modeling: GMM and Hidden Markov Models (HMM)
+
+While K-Means performs hard geometric partitioning ($\hat{S}_t \in \{1, \dots, K\}$), financial markets frequently exhibit transitional behavior where the true state is a probabilistic mixture of conditions.
+
+#### 1. Gaussian Mixture Model (GMM) Formulation
+Observations $\mathbf{y}_t \in \mathbb{R}^p$ are generated from a convex mixture of $K$ multivariate Gaussian densities:
+$$p(\mathbf{y}_t \mid \boldsymbol{\Theta}) = \sum_{k=1}^K \pi_k \mathcal{N}(\mathbf{y}_t \mid \boldsymbol{\mu}_k, \mathbf{\Sigma}_k)$$
+where $\pi_k \ge 0, \sum_{k=1}^K \pi_k = 1$ are mixture weights, and $\boldsymbol{\Theta} = \{\pi_k, \boldsymbol{\mu}_k, \mathbf{\Sigma}_k\}_{k=1}^K$.
+
+The posterior responsibility (soft membership) of regime $k$ at time $t$ is computed via Bayes' theorem:
+$$\gamma_{tk} = \mathbb{P}(S_t = k \mid \mathbf{y}_t) = \frac{\pi_k \mathcal{N}(\mathbf{y}_t \mid \boldsymbol{\mu}_k, \mathbf{\Sigma}_k)}{\sum_{j=1}^K \pi_j \mathcal{N}(\mathbf{y}_t \mid \boldsymbol{\mu}_j, \mathbf{\Sigma}_j)}$$
+
+#### 2. First-Order Gaussian Hidden Markov Model (HMM)
+The Gaussian HMM extends GMM by directly coupling latent states through a first-order Markov transition matrix:
+$$\mathbb{P}(S_t = j \mid S_{t-1} = i) = A_{ij}$$
+$$\mathbf{y}_t \mid (S_t = k) \sim \mathcal{N}(\boldsymbol{\mu}_k, \mathbf{\Sigma}_k)$$
+
+Parameter estimation is solved via the Baum-Welch (Expectation-Maximization) algorithm:
+- **E-Step (Forward-Backward recursion):**
+  $$\alpha_t(i) = \mathbb{P}(\mathbf{y}_1, \dots, \mathbf{y}_t, S_t = i) = \left[ \sum_{j=1}^K \alpha_{t-1}(j) A_{ji} \right] \mathcal{N}(\mathbf{y}_t \mid \boldsymbol{\mu}_i, \mathbf{\Sigma}_i)$$
+  $$\beta_t(i) = \mathbb{P}(\mathbf{y}_{t+1}, \dots, \mathbf{y}_T \mid S_t = i) = \sum_{j=1}^K A_{ij} \mathcal{N}(\mathbf{y}_{t+1} \mid \boldsymbol{\mu}_j, \mathbf{\Sigma}_j) \beta_{t+1}(j)$$
+- **M-Step Parameter Re-estimation:**
+  $$\hat{A}_{ij} = \frac{\sum_{t=1}^{T-1} \xi_t(i, j)}{\sum_{t=1}^{T-1} \gamma_t(i)}, \quad \hat{\boldsymbol{\mu}}_k = \frac{\sum_{t=1}^T \gamma_t(k) \mathbf{y}_t}{\sum_{t=1}^T \gamma_t(k)}$$
+- **Viterbi Optimal Path Decoding:**
+  $$S^*_{1:T} = \arg\max_{S_1, \dots, S_T} \mathbb{P}(S_1, \dots, S_T \mid \mathbf{y}_1, \dots, \mathbf{y}_T)$$
+  Solved in $\mathcal{O}(T K^2)$ via dynamic programming:
+  $$V_t(k) = \max_{j} \left[ V_{t-1}(j) + \ln A_{jk} \right] + \ln \mathcal{N}(\mathbf{y}_t \mid \boldsymbol{\mu}_k, \mathbf{\Sigma}_k)$$
+
 ---
 
 ## 6. Stochastic Dynamics: Discrete-Time Markov Chain Analysis

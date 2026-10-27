@@ -364,3 +364,22 @@ $$
 
 **Why this matters to us:**
 Accounting for turnover and trading costs prevents the model from generating false positive performance or trading excessively on minor noise, ensuring that reported returns reflect achievable live performance.
+
+
+---
+
+## 22. Hard Clustering vs. Soft Clustering (GMM & Hidden Markov Models)
+
+In traditional clustering (such as K-Means), each observation is assigned to exactly one cluster with 100% certainty ("hard clustering"). In financial markets, conditions often blend together gradually rather than switching instantly.
+
+### 1. Gaussian Mixture Models (GMM)
+GMM provides "soft clustering" by assuming the data is generated from a combination of several bell curves (Gaussian distributions). Instead of saying *"the market is 100% in Regime 1"*, GMM outputs probabilities:
+- 65% Low-Volatility Neutral
+- 25% Bullish
+- 10% High-Volatility Transition
+
+### 2. Hidden Markov Models (HMM)
+A Hidden Markov Model goes one step further: it connects these soft probabilities across consecutive trading days. It understands that yesterday's state directly influences today's state through transition probabilities $A_{ij} = \mathbb{P}(S_t = j \mid S_{t-1} = i)$. Using the Viterbi algorithm, it finds the single most likely path of market regimes over the entire history of the asset.
+
+**Why this matters to us:**
+Soft clustering allows our trading models to measure regime uncertainty and avoid making aggressive, binary bets when the market is hovering near a boundary between two states.
