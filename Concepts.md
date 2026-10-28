@@ -448,3 +448,21 @@ By combining regime persistence filtering with cross-sectional selection, the mu
 **Why this matters to us:**
 Multi-asset cross-sectional allocation delivers superior risk-adjusted compounding: it avoids catastrophic drawdowns by fleeing bearish coins into cash, while harvesting alpha by concentrating capital in the highest-momentum bullish assets.
 
+
+---
+
+## 25. Cloud Deployment & Public Accessibility (Streamlit Community Cloud)
+
+While quantitative backtests and machine learning pipelines live in Python scripts and Jupyter notebooks, an institutional or retail user requires an accessible interface without having to clone a GitHub repository, configure a virtual environment, or install dependencies.
+
+### 1. Streamlit Community Cloud Architecture
+Streamlit Community Cloud connects directly to your GitHub repository:
+- **Zero-Infrastructure Hosting:** Streamlit provisions a managed Linux container in the cloud, reads `requirements.txt`, installs dependencies, and runs `app.py`.
+- **Global Public URL:** Assigns a live, permanent HTTPS domain (e.g., `https://[your-app-name].streamlit.app`) accessible from any browser, desktop, tablet, or smartphone worldwide.
+- **Continuous Integration / Continuous Deployment (CI/CD):** Any push to the `main` branch automatically triggers an instant rebuild and redeployment on the cloud with zero downtime.
+- **Configuration & Theming (`.streamlit/config.toml`):** Configures headless operation, disabling cross-origin restrictions and enabling security protection out-of-the-box.
+
+**Why this matters to us:**
+Deploying to Streamlit Community Cloud eliminates all technical barriers for end users: anyone can select a cryptocurrency, pick a fiat currency, and inspect the real-time regime prediction from their web browser without running a single line of terminal code.
+
+

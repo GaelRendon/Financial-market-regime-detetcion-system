@@ -354,9 +354,28 @@ The project includes an interactive web dashboard built with **Streamlit** and *
 
 ### Launch the Application
 
-You can launch the dashboard using any of the following methods depending on your environment:
+#### Option 1: Free Cloud Deployment via Streamlit Community Cloud (Public Access)
 
-#### 1. Git Bash
+To make the application publicly available on the web so anyone can access it from any browser or phone:
+
+1. Push your repository to GitHub (e.g. `main` branch).
+2. Go to [share.streamlit.io](https://share.streamlit.io/) and log in with your GitHub account.
+3. Click **"New app"** (or **"Create app"**).
+4. Select this repository: `Financial-market-regime-detetcion-system`.
+5. Set:
+   - **Branch:** `main`
+   - **Main file path:** `app.py`
+6. Click **"Deploy!"**.
+   
+Streamlit will install dependencies from `requirements.txt`, load `.streamlit/config.toml`, and provide a permanent public URL (e.g., `https://[your-app-name].streamlit.app`) accessible worldwide.
+
+---
+
+#### Option 2: Local Execution
+
+You can also launch the dashboard locally on your machine using any of the following methods:
+
+##### 1. Git Bash
 
 **Option A (Direct execution):**
 ```bash
