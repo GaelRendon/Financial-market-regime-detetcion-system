@@ -415,3 +415,36 @@ In volatile crypto markets, we use **Fractional Kelly (Half-Kelly)** to reduce v
 
 **Why this matters to us:**
 Continuous sizing and smoothing dampen portfolio turnover, substantially reducing transaction fees and preventing whipsaws during regime transitions.
+
+
+---
+
+## 24. Multi-Asset Cross-Sectional Portfolio Allocation
+
+In single-asset trading, the system makes a binary or fractional choice between holding that single cryptocurrency (e.g., BTC) or holding Cash. In the real world, investors trade a **portfolio of multiple digital assets** (e.g., Bitcoin, Ethereum, Solana).
+
+Because different cryptocurrencies do not always change regimes at the exact same moment—Ethereum might enter an expansionary Bullish regime while Solana is in a High-Volatility Bearish correction—we can systematically rotate capital to the most favorable coins while protecting the overall portfolio.
+
+### 1. Cross-Sectional Ranking & Momentum
+Cross-sectional ranking compares all assets against each other at each time step $t$:
+- **Regime Gatekeeping:** Any coin currently detected in a *"High-Volatility Bearish"* regime is strictly eliminated from the investable universe for that day.
+- **Top-$K$ Selection:** Among the remaining healthy assets, the system selects the top $K$ coins exhibiting the highest trailing price momentum ($14$-day or $30$-day return).
+- **Cash Preservation:** If only $m < K$ coins qualify (e.g., during a broad market panic), the remaining portfolio capital is preserved in 100% Cash.
+
+### 2. Regime-Conditioned Risk Parity
+In traditional equal weighting ($1/N$), higher-volatility coins dominate the portfolio's risk. Risk parity solves this by weighting each non-bearish asset inversely to its volatility:
+$$
+w_{i,t} \propto \frac{1}{\sigma_{i,t}}
+$$
+A stable coin with lower daily variance receives a higher capital weight, while a volatile coin receives a smaller weight, ensuring each position contributes equally to overall portfolio risk.
+
+### 3. Multi-Asset Turnover & Rebalancing Friction
+Rebalancing a multi-coin portfolio incurs trading costs across every asset whose weight changes:
+$$
+\Delta W_t = \sum_{i=1}^N |w_{i,t} - w_{i,t-1}|
+$$
+By combining regime persistence filtering with cross-sectional selection, the multi-asset allocator minimizes unnecessary rebalancing, keeping turnover and slippage under tight control.
+
+**Why this matters to us:**
+Multi-asset cross-sectional allocation delivers superior risk-adjusted compounding: it avoids catastrophic drawdowns by fleeing bearish coins into cash, while harvesting alpha by concentrating capital in the highest-momentum bullish assets.
+

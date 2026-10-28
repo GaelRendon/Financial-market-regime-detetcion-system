@@ -330,7 +330,33 @@ $$V_t = V_0 \prod_{\tau=1}^t (1 + R_\tau^{\text{strat}})$$
 Benchmark Buy-and-Hold portfolio equity (passive zero-turnover reference):
 $$V_t^{\text{bh}} = V_0 \prod_{\tau=1}^t (1 + R_\tau^{\text{mkt}})$$
 
-### 8.4 Formal Financial Metric Definitions
+### 8.4 Multi-Asset Cross-Sectional Allocation & Risk Parity Mechanics
+When managing an $N$-asset cryptocurrency universe $\mathcal{A} = \{A_1, A_2, \dots, A_N\}$, each asset $i$ simultaneously exhibits return $R_{i,t}$ and an inferred regime state $S_{i,t}$ or posterior distribution $p_{i,t,k} = P(S_{i,t} = k)$. The multi-asset portfolio vector $\mathbf{w}_t = (w_{1,t}, \dots, w_{N,t})^\top$ is determined cross-sectionally subject to long-only and cash preservation constraints:
+$$w_{i,t} \ge 0, \quad \sum_{i=1}^N w_{i,t} \le 1.0, \quad w_{\text{cash}, t} = 1 - \sum_{i=1}^N w_{i,t}$$
+
+#### 1. Passive Equal-Weight Benchmark
+$$w_{i,t} = \frac{1}{N}, \quad \forall i \in \{1, \dots, N\}$$
+
+#### 2. Regime-Proportional Normalization
+Each asset receives nominal exposure $w_{i,t}^* = \Phi(S_{i,t})$ based on its regime mapping. Cross-sectional budget normalization guarantees aggregate exposure never exceeds unity while enabling flight-to-cash when systemic bearishness prevails:
+$$w_{i,t} = \frac{w_{i,t}^*}{\max\left(1.0, \sum_{j=1}^N w_{j,t}^*\right)}$$
+
+#### 3. Top-$K$ Cross-Sectional Momentum with Regime Gatekeeping
+Assets are first filtered through a regime feasibility gate: $\mathcal{Q}_t = \{ i \in \mathcal{A} \mid S_{i,t} \notin \text{Bearish} \}$. Qualifying assets are ranked by $L$-day trailing geometric momentum:
+$$M_{i,t} = \prod_{\tau=0}^{L-1} (1 + R_{i, t-\tau}) - 1$$
+The top $K$ ranking assets $\mathcal{T}_t \subseteq \mathcal{Q}_t$ (where $|\mathcal{T}_t| = m \le K$) receive equal allocation:
+$$w_{i,t} = \begin{cases} \frac{1}{K} & \text{if } i \in \mathcal{T}_t \\ 0 & \text{otherwise} \end{cases}, \quad w_{\text{cash}, t} = \frac{K - m}{K}$$
+
+#### 4. Regime-Conditioned Risk Parity (Inverse Volatility)
+Assets outside the bearish regime receive capital inversely proportional to their $W$-day empirical volatility $\sigma_{i,t}$:
+$$w_{i,t}^* = \frac{1}{\sigma_{i,t}} \cdot \mathbf{1}_{\{S_{i,t} \notin \text{Bearish}\}}, \quad w_{i,t} = \frac{w_{i,t}^*}{\sum_{j=1}^N w_{j,t}^*}$$
+
+#### 5. Multi-Asset Turnover & Friction Drag
+Portfolio turnover across all $N$ assets at execution time $t$ is:
+$$\Delta W_t = \sum_{i=1}^N |w_{i,t}^{\text{exec}} - w_{i,t-1}^{\text{exec}}|$$
+$$R_{p,t}^{\text{net}} = \sum_{i=1}^N w_{i,t}^{\text{exec}} R_{i,t} - \Delta W_t \cdot (c_{\text{fee}} + c_{\text{slip}})$$
+
+### 8.5 Formal Financial Metric Definitions
 
 #### 1. Annualized Compounded Return (CAGR)
 Given elapsed trading days $D = t_{\text{end}} - t_{\text{start}}$:

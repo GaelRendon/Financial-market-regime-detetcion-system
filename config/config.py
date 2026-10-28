@@ -82,6 +82,23 @@ TRANSACTION_FEE_BPS = 10.0
 SLIPPAGE_BPS = 5.0
 
 # ==========================================
+# MULTI-ASSET PORTFOLIO ALLOCATION CONFIGURATION
+# ==========================================
+
+# Cross-sectional asset universe for multi-coin portfolio allocation
+MULTI_ASSET_UNIVERSE = ["BTC-USD", "ETH-USD", "SOL-USD"]
+
+# Default multi-asset allocation strategy:
+# "equal_weight", "regime_proportional", "top_k_momentum_regime", "risk_parity_regime"
+DEFAULT_MULTI_ASSET_STRATEGY = "regime_proportional"
+
+# Number of top assets to select in Top-K Cross-Sectional Momentum
+MULTI_ASSET_TOP_K = 2
+
+# Trailing momentum window (in days) for cross-sectional ranking
+MULTI_ASSET_MOMENTUM_LOOKBACK = 14
+
+# ==========================================
 # OUTPUT CONFIGURATION
 # ==========================================
 

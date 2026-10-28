@@ -183,6 +183,7 @@ However, the project architecture was designed to support multiple cryptocurrenc
 - BNB-USD
 - SOL-USD
 - Additional Yahoo Finance supported assets
+- **Multi-Asset Cross-Sectional Allocation:** Dynamic portfolio rebalancing across multiple crypto assets via `MultiAssetAllocator` (Equal Weight, Regime-Proportional, Top-K Momentum + Regime Gate, and Regime-Conditioned Risk Parity)
 
 ---
 
@@ -276,7 +277,7 @@ Financial-Market-Regime-Detection-System/
 │   ├── clustering/              # Hard K-Means, Soft GMM, and Gaussian HMM
 │   ├── regime_detection/
 │   ├── regime_forecasting/
-│   └── backtesting/             # Discrete, Confidence-Weighted & Kelly Position Sizing
+│   └── backtesting/             # Discrete, Kelly Sizing & Multi-Asset Cross-Sectional Allocation
 │
 ├── data/
 │   ├── raw/
