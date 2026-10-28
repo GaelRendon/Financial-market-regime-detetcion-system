@@ -72,8 +72,11 @@ class RegimeInferenceEngine:
         if not data.empty and len(data) > 60:
             if isinstance(data.columns, pd.MultiIndex):
                 data.columns = data.columns.get_level_values(0)
-            data.index.name = "Date"
-            return data
+            if "Close" in data.columns:
+                data = data[data["Close"] > 0].dropna(subset=["Close"])
+            if len(data) > 60:
+                data.index.name = "Date"
+                return data
 
         # Fallback via USD conversion
         usd_ticker = f"{coin}-USD"
@@ -83,6 +86,9 @@ class RegimeInferenceEngine:
 
         if isinstance(data_usd.columns, pd.MultiIndex):
             data_usd.columns = data_usd.columns.get_level_values(0)
+
+        if "Close" in data_usd.columns:
+            data_usd = data_usd[data_usd["Close"] > 0].dropna(subset=["Close"])
 
         if fiat.upper() == "USD":
             data_usd.index.name = "Date"

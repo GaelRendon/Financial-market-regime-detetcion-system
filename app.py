@@ -87,6 +87,20 @@ CURRENCY_SYMBOLS = {
     "CAD": "CA$"
 }
 
+def format_crypto_price(value: float, symbol: str = "$") -> str:
+    """Format crypto price with adaptive precision so sub-dollar and micro-cap coins don't display $0.00."""
+    abs_val = abs(value)
+    if abs_val >= 1.0:
+        return f"{symbol}{value:,.2f}"
+    elif abs_val >= 0.01:
+        return f"{symbol}{value:,.4f}"
+    elif abs_val >= 0.0001:
+        return f"{symbol}{value:,.6f}"
+    elif abs_val > 0:
+        return f"{symbol}{value:,.8f}"
+    else:
+        return f"{symbol}0.00"
+
 # Sidebar inputs
 st.sidebar.title("⚙️ Asset & Horizon")
 st.sidebar.markdown("Configure target cryptocurrency and denomination fiat:")
@@ -155,7 +169,7 @@ if results:
         with m1:
             st.metric(
                 label=f"Current Price ({selected_fiat})",
-                value=f"{fiat_symbol}{results['latest_close']:,.2f}",
+                value=format_crypto_price(results['latest_close'], fiat_symbol),
                 delta=f"{results['change_24h_pct']:+.2f}% (24h)"
             )
         with m2:

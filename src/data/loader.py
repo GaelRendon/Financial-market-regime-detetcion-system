@@ -1,9 +1,20 @@
 """
 Data loader module for reading and parsing raw and processed datasets.
+Supports absolute and project-relative path resolution.
 """
 
 import os
+import sys
+from typing import Optional
 import pandas as pd
+
+# Resolve project paths dynamically
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
+
+from config.config import RAW_DATA_PATH, PROCESSED_DATA_PATH
 
 
 class DataLoader:
@@ -11,11 +22,22 @@ class DataLoader:
 
     def __init__(
         self,
-        raw_data_path: str = "../data/raw",
-        processed_data_path: str = "../data/processed"
+        raw_data_path: Optional[str] = None,
+        processed_data_path: Optional[str] = None
     ):
-        self.raw_data_path = raw_data_path
-        self.processed_data_path = processed_data_path
+        if raw_data_path is None:
+            self.raw_data_path = RAW_DATA_PATH
+        elif os.path.isabs(raw_data_path):
+            self.raw_data_path = raw_data_path
+        else:
+            self.raw_data_path = os.path.abspath(os.path.join(PROJECT_ROOT, raw_data_path))
+
+        if processed_data_path is None:
+            self.processed_data_path = PROCESSED_DATA_PATH
+        elif os.path.isabs(processed_data_path):
+            self.processed_data_path = processed_data_path
+        else:
+            self.processed_data_path = os.path.abspath(os.path.join(PROJECT_ROOT, processed_data_path))
 
     def load_raw_data(self, ticker: str, interval: str = "1d") -> pd.DataFrame:
         """

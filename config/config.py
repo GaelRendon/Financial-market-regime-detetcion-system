@@ -1,3 +1,12 @@
+import os
+
+# ==========================================
+# ROOT DIRECTORY PATH RESOLUTION
+# ==========================================
+# Compute absolute paths relative to project root regardless of where scripts are executed
+CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(CONFIG_DIR, ".."))
+
 # ==========================================
 # DATA COLLECTION CONFIGURATION
 # ==========================================
@@ -5,9 +14,27 @@ ASSETS = [
     "BTC-USD", 
 ]
 
-# The start and end dates for the data collection. These can be adjusted based on the desired time frame for analysis.
+# The default baseline start date for assets with deep history
 START_DATE = "2018-01-01"
 END_DATE = None
+
+# Individual asset inception dates on Yahoo Finance.
+# Newer assets (e.g. Solana, Avalanche, Polkadot) did not trade in 2018;
+# defining their true launch dates avoids downloading artificial zero-price rows.
+ASSET_START_DATES = {
+    "BTC-USD": "2018-01-01",
+    "ETH-USD": "2018-01-01",
+    "BNB-USD": "2018-01-01",
+    "SOL-USD": "2020-04-10",
+    "ADA-USD": "2018-01-01",
+    "DOGE-USD": "2018-01-01",
+    "XRP-USD": "2018-01-01",
+    "AVAX-USD": "2020-09-22",
+    "DOT-USD": "2020-08-20",
+    "LINK-USD": "2018-01-01",
+    "MATIC-USD": "2019-04-28",
+    "POL-USD": "2019-04-28"
+}
 
 # The interval for the data collection. This can be adjusted based on the desired granularity of the data (e.g., "1d" for daily, "1h" for hourly).
 INTERVAL = "1d"
@@ -102,8 +129,9 @@ MULTI_ASSET_MOMENTUM_LOOKBACK = 14
 # OUTPUT CONFIGURATION
 # ==========================================
 
-RAW_DATA_PATH = "../data/raw"
-PROCESSED_DATA_PATH = "../data/processed"
-FIGURES_PATH = "../outputs/figures"
-REPORTS_PATH = "../outputs/reports"
-MODELS_PATH = "../outputs/models"
+# Standardized absolute directories anchored to project root
+RAW_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "raw")
+PROCESSED_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "processed")
+FIGURES_PATH = os.path.join(PROJECT_ROOT, "outputs", "figures")
+REPORTS_PATH = os.path.join(PROJECT_ROOT, "outputs", "reports")
+MODELS_PATH = os.path.join(PROJECT_ROOT, "outputs", "models")

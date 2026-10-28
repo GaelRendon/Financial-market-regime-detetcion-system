@@ -10,7 +10,7 @@ Csv/
 .vscode/
 .idea/
 
-# Virtual enviroments
+# Virtual environments
 venv/
 .env/
 *.pyc
@@ -42,8 +42,22 @@ coverage/
 *.swo
 *.tmp
 
-# Don't use data and outputs
-outputs/
-data/
+# Data (preserve directory structure via .gitkeep while ignoring heavy CSV files)
+data/raw/*.csv
+!data/raw/.gitkeep
+data/processed/*.csv
+!data/processed/.gitkeep
+
+# Outputs (preserve directories via .gitkeep while ignoring heavy binaries)
+outputs/figures/*
+!outputs/figures/.gitkeep
+outputs/reports/*
+!outputs/reports/.gitkeep
+outputs/models/*.pkl
+!outputs/models/.gitkeep
+!outpus
+
+
+# System agents & local caches
 .agents
 .claude

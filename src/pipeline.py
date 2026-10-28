@@ -35,9 +35,11 @@ from src.backtesting.strategy import RegimeStrategy
 from src.backtesting.metrics import PerformanceMetrics
 
 
-def _resolve_project_path(rel_path: str) -> str:
-    """Resolve paths whether called from notebooks/ or project root."""
-    normalized = rel_path.replace("\\", "/")
+def _resolve_project_path(path: str) -> str:
+    """Resolve paths whether already absolute or relative."""
+    if os.path.isabs(path):
+        return path
+    normalized = path.replace("\\", "/")
     if normalized.startswith("../"):
         normalized = normalized[3:]
     return os.path.abspath(os.path.join(PROJECT_ROOT, normalized))
@@ -67,7 +69,9 @@ class RegimeDetectionPipeline:
             raw_data_path=self.raw_data_path,
             processed_data_path=self.processed_data_path
         )
-        if download_fresh:
+        expected_raw_file = os.path.join(self.raw_data_path, f"{self.sanitized_ticker}_{INTERVAL}_raw.csv")
+        if download_fresh or not os.path.exists(expected_raw_file):
+            print(f"Raw data file not found or refresh requested. Downloading fresh data for {self.ticker}...")
             collector = DataCollector(
                 assets=[self.ticker],
                 start_date=START_DATE,
