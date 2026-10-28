@@ -466,3 +466,41 @@ Streamlit Community Cloud connects directly to your GitHub repository:
 Deploying to Streamlit Community Cloud eliminates all technical barriers for end users: anyone can select a cryptocurrency, pick a fiat currency, and inspect the real-time regime prediction from their web browser without running a single line of terminal code.
 
 
+---
+
+## 26. Multi-Step Forward Monte Carlo & Markov Regime Projection
+
+Predicting tomorrow's single-day regime is useful for immediate rebalancing, but investors naturally want to know: *"If I put \$1,000 (or \$10,000 MXN) into this asset today, what could it look like over the next 7 days?"*
+
+Because no model can foresee the exact future with 100% certainty, predicting capital growth requires **probabilistic modeling** rather than a single deterministic guess.
+
+### 1. Markov Chain Multi-Step Evolution
+Using the empirical transition matrix $\mathbf{P}$, we can project how probabilities spread out across future days:
+- **Day 1:** Conditioned on tomorrow's Random Forest prediction $\mathbf{p}_1$.
+- **Day 2:** $\mathbf{p}_2 = \mathbf{p}_1 \mathbf{P}$.
+- **Day $\tau$:** $\mathbf{p}_\tau = \mathbf{p}_1 \mathbf{P}^{\tau-1}$.
+
+As the horizon extends, the probabilities smoothly converge toward the long-term stationary distribution of the market.
+
+### 2. Monte Carlo Path Simulation
+Rather than assuming a single linear return, the system generates **1,000 synthetic future timelines**:
+1. At each day, a regime state is sampled according to transition probabilities.
+2. A daily price return is drawn from that specific regime's empirical Gaussian distribution $\mathcal{N}(\mu_k, \sigma_k)$.
+3. Capital compounds along each path: $V_{\tau} = V_{\tau-1} \cdot (1 + R_\tau)$.
+
+### 3. Asymmetric Risk Corridors
+By computing percentiles across all 1,000 paths, the model provides:
+- **Expected Trajectory (Mean):** The statistical average expected outcome.
+- **Interquartile Core (25th to 75th percentile):** The central 50% probability zone.
+- **Downside Tail (10th percentile):** What happens if adverse market shocks occur.
+- **Upside Tail (90th percentile):** What happens if an expansionary rally continues.
+
+### 4. Mandatory Risk Disclaimer
+> **⚠️ "It's a prediction, not a statement — take your own risk."**
+> In quantitative finance, models provide probabilistic insights based on past statistical patterns. They are **not guarantees**, statements of certainty, or financial advice. Communicating confidence intervals and lower-bound risks prevents users from confusing a mathematical prediction with an infallible statement.
+
+**Why this matters to us:**
+Providing a day-by-day table and confidence corridors empowers users to visualize both the upside potential and downside exposure of their money, fostering disciplined risk management.
+
+
+

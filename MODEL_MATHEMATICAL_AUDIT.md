@@ -386,6 +386,30 @@ $$DD_t = \frac{V_t - M_t}{M_t} \in [-1, 0]$$
 The Maximum Drawdown over the entire historical trajectory is:
 $$\text{MDD} = \min_{0 \le t \le T} DD_t$$
 
+### 8.6 Multi-Step Forward Markov Chain & Monte Carlo Capital Simulation
+To project multi-step capital trajectories over a forward horizon of $H = 7$ days given an initial invested capital $V_0$:
+
+#### 1. Analytical Markov State Propagation
+Given Day 1 forecasted posterior state probability vector $\mathbf{p}_1 \in \mathbb{R}^K$ from the supervised classifier, subsequent multi-day probability distributions evolve according to the Chapman-Kolmogorov forward equations:
+$$\mathbf{p}_\tau = \mathbf{p}_{\tau-1} \mathbf{P} = \mathbf{p}_1 \mathbf{P}^{\tau-1}, \quad \tau \in \{2, 3, \dots, H\}$$
+where $\mathbf{P} \in \mathbb{R}^{K \times K}$ is the empirical row-stochastic Markov transition matrix.
+
+#### 2. Expected Daily Return Vector
+With historical empirical return mean vector $\boldsymbol{\mu} = (\mu_1, \dots, \mu_K)^\top$:
+$$\mathbb{E}[R_\tau] = \mathbf{p}_\tau \boldsymbol{\mu} = \sum_{k=1}^K p_{\tau,k} \mu_k$$
+
+#### 3. Monte Carlo Simulation for Path Corridors
+To capture non-Gaussian uncertainty and tail risk, $S = 1,000$ independent sample paths are generated:
+1. Sample initial state $s_{1}^{(i)} \sim \text{Categorical}(\mathbf{p}_1)$.
+2. For each day $\tau \in \{1, \dots, H\}$:
+   $$R_{\tau}^{(i)} \sim \mathcal{N}\left(\mu_{s_\tau^{(i)}}, \sigma_{s_\tau^{(i)}}^2\right)$$
+   $$V_{\tau}^{(i)} = V_{\tau-1}^{(i)} \cdot \left(1 + R_{\tau}^{(i)}\right)$$
+   $$s_{\tau+1}^{(i)} \sim \text{Categorical}\left(\mathbf{P}_{s_\tau^{(i)}, :}\right)$$
+
+Empirical percentile curves quantify asymmetric risk corridors:
+$$Q_\alpha(V_\tau) = \inf \left\{ v \in \mathbb{R} \mid \frac{1}{S} \sum_{i=1}^S \mathbf{1}_{\{V_\tau^{(i)} \le v\}} \ge \alpha \right\}$$
+where $\alpha \in \{0.10, 0.25, 0.50, 0.75, 0.90\}$.
+
 ---
 
 ## 9. Mathematical Audit Verification Checklist

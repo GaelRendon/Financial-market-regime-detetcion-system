@@ -257,3 +257,140 @@ class RegimeInferenceEngine:
             "persistence_stats": persistence_stats,
             "df_history": clean_data
         }
+
+    def simulate_forward_trajectory(
+        self,
+        analysis_result: Dict[str, Any],
+        initial_capital: float = 1000.0,
+        horizon_days: int = 7,
+        n_simulations: int = 1000
+    ) -> Dict[str, Any]:
+        """
+        Simulate multi-step forward money growth over horizon_days (e.g. 7 days)
+        using Markov chain transition propagation and Monte Carlo empirical sampling.
+        """
+        df_hist = analysis_result["df_history"]
+        trans_mat = analysis_result["transition_matrix"]
+        forecast_probs = analysis_result["forecast_probabilities"]
+        latest_date_str = analysis_result["latest_date"]
+        start_date = pd.to_datetime(latest_date_str)
+
+        # 1. Historical empirical return distribution per regime
+        regime_stats = {}
+        for reg in df_hist["Market_Regime"].unique():
+            reg_rets = df_hist.loc[df_hist["Market_Regime"] == reg, "Returns"].dropna()
+            regime_stats[reg] = {
+                "mean": float(reg_rets.mean()) if len(reg_rets) > 0 else 0.0,
+                "std": float(reg_rets.std()) if len(reg_rets) > 1 else 0.02
+            }
+
+        # Align regimes list
+        regimes = list(trans_mat.index)
+        n_regimes = len(regimes)
+        reg_to_idx = {r: i for i, r in enumerate(regimes)}
+
+        # Transition matrix as numpy array
+        P = np.zeros((n_regimes, n_regimes))
+        for r_from in regimes:
+            i = reg_to_idx[r_from]
+            for r_to in regimes:
+                j = reg_to_idx[r_to]
+                if r_to in trans_mat.columns:
+                    P[i, j] = trans_mat.loc[r_from, r_to]
+            if P[i].sum() > 0:
+                P[i] = P[i] / P[i].sum()
+            else:
+                P[i, i] = 1.0
+
+        # Initial Day 1 probability vector from model forecast
+        p1 = np.zeros(n_regimes)
+        for r, prob in forecast_probs.items():
+            if r in reg_to_idx:
+                p1[reg_to_idx[r]] = prob
+        if p1.sum() > 0:
+            p1 = p1 / p1.sum()
+        else:
+            p1 = np.ones(n_regimes) / n_regimes
+
+        # 2. Multi-step analytical Markov propagation
+        daily_probs = [p1]
+        current_p = p1.copy()
+        for d in range(1, horizon_days):
+            current_p = np.dot(current_p, P)
+            daily_probs.append(current_p)
+
+        # 3. Monte Carlo Simulation for path distributions
+        rng = np.random.RandomState(RANDOM_SEED)
+        sim_paths = np.zeros((n_simulations, horizon_days + 1))
+        sim_paths[:, 0] = initial_capital
+
+        means = np.array([regime_stats.get(r, {}).get("mean", 0.0) for r in regimes])
+        stds = np.array([regime_stats.get(r, {}).get("std", 0.02) for r in regimes])
+
+        for s in range(n_simulations):
+            state_idx = rng.choice(n_regimes, p=p1)
+            for d in range(horizon_days):
+                daily_ret = rng.normal(loc=means[state_idx], scale=stds[state_idx])
+                daily_ret = np.clip(daily_ret, -0.30, 0.50)
+                sim_paths[s, d + 1] = sim_paths[s, d] * (1.0 + daily_ret)
+                state_idx = rng.choice(n_regimes, p=P[state_idx])
+
+        # Percentile corridors
+        pct_10 = np.percentile(sim_paths, 10, axis=0)
+        pct_25 = np.percentile(sim_paths, 25, axis=0)
+        pct_50 = np.percentile(sim_paths, 50, axis=0)
+        pct_75 = np.percentile(sim_paths, 75, axis=0)
+        pct_90 = np.percentile(sim_paths, 90, axis=0)
+        pct_mean = np.mean(sim_paths, axis=0)
+
+        # 4. Construct Day-by-Day Breakdown Table
+        breakdown = []
+        for d in range(horizon_days):
+            day_num = d + 1
+            day_date = (start_date + pd.Timedelta(days=day_num)).strftime("%Y-%m-%d")
+            p_vector = daily_probs[d]
+            best_idx = int(np.argmax(p_vector))
+            best_regime = regimes[best_idx]
+            confidence = float(p_vector[best_idx]) * 100.0
+
+            expected_ret = float(np.sum(p_vector * means))
+            expected_cap = float(pct_mean[day_num])
+            pnl = expected_cap - initial_capital
+
+            breakdown.append({
+                "Day": f"Day {day_num}",
+                "Date": day_date,
+                "Predicted_Regime": best_regime,
+                "Confidence (%)": round(confidence, 1),
+                "Exp. Daily Return (%)": round(expected_ret * 100.0, 2),
+                "Projected Capital": round(expected_cap, 2),
+                "Lower Bound (10th)": round(float(pct_10[day_num]), 2),
+                "Upper Bound (90th)": round(float(pct_90[day_num]), 2),
+                "Cumulative P&L": round(pnl, 2),
+                "Cumulative Return (%)": round(((expected_cap / initial_capital) - 1.0) * 100.0, 2)
+            })
+
+        breakdown_df = pd.DataFrame(breakdown)
+
+        final_exp_cap = float(pct_mean[-1])
+        final_pnl = final_exp_cap - initial_capital
+        final_pct = ((final_exp_cap / initial_capital) - 1.0) * 100.0
+
+        return {
+            "initial_capital": float(initial_capital),
+            "final_expected_capital": round(final_exp_cap, 2),
+            "final_net_profit": round(final_pnl, 2),
+            "final_pct_return": round(final_pct, 2),
+            "lower_bound_10th": round(float(pct_10[-1]), 2),
+            "upper_bound_90th": round(float(pct_90[-1]), 2),
+            "breakdown_df": breakdown_df,
+            "dates": [(start_date + pd.Timedelta(days=i)).strftime("%Y-%m-%d") for i in range(horizon_days + 1)],
+            "corridors": {
+                "mean": pct_mean.tolist(),
+                "p10": pct_10.tolist(),
+                "p25": pct_25.tolist(),
+                "p50": pct_50.tolist(),
+                "p75": pct_75.tolist(),
+                "p90": pct_90.tolist()
+            }
+        }

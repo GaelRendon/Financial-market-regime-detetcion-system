@@ -414,4 +414,5 @@ Once launched, open your browser at `http://localhost:8501`.
 - **Probabilistic Forecasting:** Real-time multi-class regime confidence distribution for tomorrow's market state.
 - **Interactive Visualizations:** Candlestick regime overlays, daily return tail bounds, 30-day rolling volatility, and 14-day momentum.
 - **Markov Transition Dynamics:** Empirical transition matrix heatmap and expected duration persistence statistics.
+- **🔮 7-Day Capital Growth Simulator (Optional Tab):** Users can enter any capital amount in their chosen currency ($ USD, Mex$ MXN, € EUR, etc.) and receive a day-by-day forward projection with 1,000 Monte Carlo statistical simulation corridors, daily expected P&L, regime progression, and a prominent risk disclaimer (*"It's a prediction, not a statement — take your own risk"*).
 - **Power BI / Excel Ready:** 1-click export of the analyzed regime dataset formatted for direct import into Power BI or Excel dashboards.
