@@ -143,13 +143,19 @@ st.markdown("<div class='main-header'>📈 Financial Market Regime Detection Sys
 st.markdown(f"<div class='sub-header'>Live quantitative regime identification, probabilistic forecasting, and automated risk allocation for <b>{full_ticker}</b></div>", unsafe_allow_html=True)
 
 # Run Inference Engine
-if run_button or "inference_results" not in st.session_state or st.session_state.get("last_ticker") != full_ticker:
+if (
+    run_button 
+    or "inference_results" not in st.session_state 
+    or st.session_state.get("last_ticker") != full_ticker
+    or st.session_state.get("last_period") != selected_period
+):
     with st.spinner(f"Fetching market data for {full_ticker} and executing quantitative pipeline..."):
         try:
             engine = RegimeInferenceEngine()
-            results = engine.analyze_ticker(full_ticker, period=selected_period)
+            results = engine.analyze_ticker(full_ticker, period=selected_period, force_refresh=run_button)
             st.session_state["inference_results"] = results
             st.session_state["last_ticker"] = full_ticker
+            st.session_state["last_period"] = selected_period
         except Exception as e:
             st.error(f"Error analyzing {full_ticker}: {str(e)}")
             st.stop()

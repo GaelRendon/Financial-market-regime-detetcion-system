@@ -56,18 +56,37 @@ class RegimeInferenceEngine:
         }
     }
 
+    # In-memory session cache for raw market data: ticker -> (timestamp, df)
+    _DATA_CACHE: Dict[str, Tuple[float, pd.DataFrame]] = {}
+    CACHE_TTL_SECONDS: float = 300.0  # 5 minutes
+
     def __init__(self, volatility_window: int = 30, momentum_window: int = 14, n_clusters: int = 4):
         self.volatility_window = volatility_window
         self.momentum_window = momentum_window
         self.n_clusters = n_clusters
 
-    def fetch_live_data(self, coin: str, fiat: str, period: str = "3y") -> pd.DataFrame:
+    def fetch_live_data(
+        self,
+        coin: str,
+        fiat: str,
+        period: str = "max",
+        force_refresh: bool = False
+    ) -> pd.DataFrame:
         """
-        Download historical price data. Automatically falls back to FX rate conversion
-        if direct pair is unavailable on Yahoo Finance.
+        Download historical price data with smart caching to ensure consistent current price.
+        Automatically falls back to FX rate conversion if direct pair is unavailable on Yahoo Finance.
         """
+        import time
+        cache_key = f"{coin.upper()}_{fiat.upper()}"
+        now = time.time()
+
+        if not force_refresh and cache_key in self._DATA_CACHE:
+            cached_time, cached_df = self._DATA_CACHE[cache_key]
+            if (now - cached_time) < self.CACHE_TTL_SECONDS:
+                return cached_df.copy()
+
         direct_ticker = f"{coin}-{fiat}"
-        data = yf.download(direct_ticker, period=period, interval="1d", progress=False)
+        data = yf.download(direct_ticker, period="max", interval="1d", progress=False)
 
         if not data.empty and len(data) > 60:
             if isinstance(data.columns, pd.MultiIndex):
@@ -76,11 +95,12 @@ class RegimeInferenceEngine:
                 data = data[data["Close"] > 0].dropna(subset=["Close"])
             if len(data) > 60:
                 data.index.name = "Date"
-                return data
+                self._DATA_CACHE[cache_key] = (now, data)
+                return data.copy()
 
         # Fallback via USD conversion
         usd_ticker = f"{coin}-USD"
-        data_usd = yf.download(usd_ticker, period=period, interval="1d", progress=False)
+        data_usd = yf.download(usd_ticker, period="max", interval="1d", progress=False)
         if data_usd.empty:
             raise ValueError(f"Could not fetch crypto data for '{coin}'. Please verify the symbol.")
 
@@ -92,15 +112,16 @@ class RegimeInferenceEngine:
 
         if fiat.upper() == "USD":
             data_usd.index.name = "Date"
-            return data_usd
+            self._DATA_CACHE[cache_key] = (now, data_usd)
+            return data_usd.copy()
 
         # Fetch FX rate (USD to Target Fiat)
         fx_ticker = f"{fiat}=X" if fiat.upper() == "MXN" else f"USD{fiat}=X"
-        fx_data = yf.download(fx_ticker, period=period, interval="1d", progress=False)
+        fx_data = yf.download(fx_ticker, period="max", interval="1d", progress=False)
 
         if fx_data.empty:
             fx_ticker_alt = f"{fiat}USD=X"
-            fx_data = yf.download(fx_ticker_alt, period=period, interval="1d", progress=False)
+            fx_data = yf.download(fx_ticker_alt, period="max", interval="1d", progress=False)
             if fx_data.empty:
                 raise ValueError(f"Direct ticker '{direct_ticker}' and FX rate for '{fiat}' not found.")
             fx_rate = 1.0 / fx_data["Close"]
@@ -109,8 +130,8 @@ class RegimeInferenceEngine:
                 fx_data.columns = fx_data.columns.get_level_values(0)
             fx_rate = fx_data["Close"]
 
-        # Align Dates
-        joined = data_usd.join(fx_rate.rename("FX_Rate"), how="inner").ffill().bfill()
+        # Align Dates with left join to prevent dropping crypto weekend/latest trading bars
+        joined = data_usd.join(fx_rate.rename("FX_Rate"), how="left").ffill().bfill()
         converted = pd.DataFrame(index=joined.index)
         for col in ["Open", "High", "Low", "Close", "Adj Close"]:
             if col in joined.columns:
@@ -119,7 +140,8 @@ class RegimeInferenceEngine:
             converted["Volume"] = joined["Volume"]
 
         converted.index.name = "Date"
-        return converted
+        self._DATA_CACHE[cache_key] = (now, converted)
+        return converted.copy()
 
     def _characterize_clusters(self, features_df: pd.DataFrame, cluster_labels: np.ndarray) -> Dict[int, str]:
         """Dynamically assign financial labels to cluster IDs based on return, volatility, and momentum."""
@@ -143,24 +165,38 @@ class RegimeInferenceEngine:
         }
         return mapping
 
-    def analyze_ticker(self, ticker: str, period: str = "3y") -> Dict[str, Any]:
+    def analyze_ticker(self, ticker: str, period: str = "3y", force_refresh: bool = False) -> Dict[str, Any]:
         """
         Execute full inference pipeline for any ticker (e.g. BTC-USD, BTC-MXN, ETH-EUR).
+        Fetches full historical data to preserve feature calculation integrity and ensure
+        the latest price remains 100% consistent regardless of the chosen lookback window.
         """
         parts = ticker.split("-")
         coin = parts[0].strip().upper()
         fiat = parts[1].strip().upper() if len(parts) > 1 else "USD"
 
-        # 1. Fetch data
-        raw_df = self.fetch_live_data(coin=coin, fiat=fiat, period=period)
+        # 1. Fetch full available data so features and latest prices are stable
+        raw_df = self.fetch_live_data(coin=coin, fiat=fiat, period="max", force_refresh=force_refresh)
 
-        # 2. Compute features
+        # 2. Compute features over complete history to avoid edge rolling-window artifacts
         features_df = pd.DataFrame(index=raw_df.index)
         features_df["Returns"] = raw_df["Close"].pct_change()
         features_df["Volatility"] = features_df["Returns"].rolling(self.volatility_window).std()
         features_df["Momentum"] = (raw_df["Close"] / raw_df["Close"].shift(self.momentum_window)) - 1.0
 
-        clean_data = raw_df.join(features_df, how="inner").dropna()
+        full_clean = raw_df.join(features_df, how="inner").dropna()
+
+        # 3. Slice history to the requested lookback window while preserving the latest price
+        LOOKBACK_DAYS_MAP = {
+            "1y": 365,
+            "2y": 365 * 2,
+            "3y": 365 * 3,
+            "5y": 365 * 5,
+            "max": len(full_clean)
+        }
+        lookback_days = LOOKBACK_DAYS_MAP.get(period, len(full_clean))
+        clean_data = full_clean.tail(min(lookback_days, len(full_clean))).copy()
+
         if len(clean_data) < 80:
             raise ValueError(f"Not enough observations ({len(clean_data)}) to build models for {ticker}.")
 
