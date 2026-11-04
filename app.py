@@ -103,15 +103,47 @@ def format_crypto_price(value: float, symbol: str = "$") -> str:
 
 # Sidebar inputs
 st.sidebar.title("⚙️ Asset & Horizon")
-st.sidebar.markdown("Configure target cryptocurrency and denomination fiat:")
+st.sidebar.markdown("Configure target financial asset and denomination fiat:")
 
-popular_coins = ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "Custom"]
-selected_coin = st.sidebar.selectbox("Cryptocurrency", popular_coins, index=0)
+asset_class = st.sidebar.selectbox(
+    "Asset Class",
+    [
+        "🪙 Cryptocurrencies",
+        "🏢 Global Stocks / Equities",
+        "🥇 Commodities & Metals",
+        "📊 Market Indices & ETFs",
+        "🔍 Custom Symbol (Any Ticker)"
+    ],
+    index=0
+)
 
-if selected_coin == "Custom":
-    coin_ticker = st.sidebar.text_input("Enter Coin Symbol (e.g. AVAX, LINK)", "AVAX").upper().strip()
+if asset_class == "🪙 Cryptocurrencies":
+    popular_crypto = ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "AVAX", "LINK"]
+    coin_ticker = st.sidebar.selectbox("Cryptocurrency", popular_crypto, index=0)
+elif asset_class == "🏢 Global Stocks / Equities":
+    popular_stocks = ["NVDA (NVIDIA)", "AAPL (Apple)", "GOOGL (Alphabet / Google)", "MSFT (Microsoft)", "AMZN (Amazon)", "TSLA (Tesla)", "META (Meta)"]
+    stock_choice = st.sidebar.selectbox("Stock / Company", popular_stocks, index=0)
+    coin_ticker = stock_choice.split()[0]
+elif asset_class == "🥇 Commodities & Metals":
+    popular_commodities = [
+        "Gold Futures (GC=F)",
+        "SPDR Gold Shares (GLD)",
+        "Silver Futures (SI=F)",
+        "Crude Oil Futures (CL=F)",
+        "Copper Futures (HG=F)"
+    ]
+    comm_choice = st.sidebar.selectbox("Commodity", popular_commodities, index=0)
+    coin_ticker = comm_choice.split("(")[1].replace(")", "").strip()
+elif asset_class == "📊 Market Indices & ETFs":
+    popular_indices = [
+        "S&P 500 (^GSPC)",
+        "Nasdaq 100 (^NDX)",
+        "Dow Jones Industrial (^DJI)"
+    ]
+    idx_choice = st.sidebar.selectbox("Market Index", popular_indices, index=0)
+    coin_ticker = idx_choice.split("(")[1].replace(")", "").strip()
 else:
-    coin_ticker = selected_coin
+    coin_ticker = st.sidebar.text_input("Enter Any Yahoo Finance Symbol (e.g. NVDA, GC=F, TSM, BABA)", "NVDA").upper().strip()
 
 selected_fiat = st.sidebar.selectbox("Fiat Currency", ["USD", "MXN", "EUR", "GBP", "CAD"], index=0)
 fiat_symbol = CURRENCY_SYMBOLS.get(selected_fiat, "$")

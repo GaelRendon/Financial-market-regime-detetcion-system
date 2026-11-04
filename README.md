@@ -176,14 +176,16 @@ However, the project architecture was designed to support multiple cryptocurrenc
 
 - BTC-USD (Information uploaded on 08/10/2026)
 
-### Supported Architecture
+### Supported Architecture & Asset Classes
 
-- BTC-USD
-- ETH-USD
-- BNB-USD
-- SOL-USD
-- Additional Yahoo Finance supported assets
-- **Multi-Asset Cross-Sectional Allocation:** Dynamic portfolio rebalancing across multiple crypto assets via `MultiAssetAllocator` (Equal Weight, Regime-Proportional, Top-K Momentum + Regime Gate, and Regime-Conditioned Risk Parity)
+The quantitative regime detection pipeline and live web dashboard are universal and asset-agnostic, supporting:
+- **🪙 Cryptocurrencies:** BTC, ETH, SOL, BNB, XRP, ADA, DOGE, AVAX, LINK, etc.
+- **🏢 Global Equities / Stocks:** NVIDIA (NVDA), Apple (AAPL), Google (GOOGL), Microsoft (MSFT), Amazon (AMZN), Tesla (TSLA), Meta (META), etc.
+- **🥇 Commodities & Precious Metals:** Gold Futures (GC=F), SPDR Gold Shares (GLD), Silver (SI=F), Crude Oil (CL=F), Copper (HG=F).
+- **📊 Benchmark Indices & ETFs:** S&P 500 (^GSPC), Nasdaq 100 (^NDX), Dow Jones (^DJI).
+- **🔍 Any Custom Symbol:** Direct support for any ticker available on Yahoo Finance.
+- **💱 Multi-Currency FX Conversion:** Automatic denomination into USD, MXN (Mexican Pesos), EUR (Euros), GBP (British Pounds), or CAD (Canadian Dollars).
+- **Multi-Asset Cross-Sectional Allocation:** Dynamic portfolio rebalancing across multiple assets via MultiAssetAllocator (Equal Weight, Regime-Proportional, Top-K Momentum + Regime Gate, and Regime-Conditioned Risk Parity).
 
 ---
 
@@ -409,7 +411,7 @@ Simply double-click the [`run_app.bat`](file:///c:/Documentos/Proyectos%20person
 Once launched, open your browser at `http://localhost:8501`.
 
 ### Dashboard Capabilities:
-- **Dynamic Asset & Fiat Selection:** Analyze any crypto pair (e.g., `BTC-USD`, `ETH-MXN`, `SOL-EUR`).
+- **Dynamic Multi-Asset & Fiat Selection:** Analyze Cryptocurrencies (BTC, ETH), Equities (NVDA, AAPL, GOOGL), Commodities (GC=F Gold, SI=F Silver), and Indices (^GSPC, ^NDX) denominated in USD, MXN, EUR, GBP, or CAD.
 - **Live Quantitative Signals:** Visual recommendation badge with position sizing (100% Invested, 50% Exposure, or 100% Cash) and risk rationale.
 - **Probabilistic Forecasting:** Real-time multi-class regime confidence distribution for tomorrow's market state.
 - **Interactive Visualizations:** Candlestick regime overlays, daily return tail bounds, 30-day rolling volatility, and 14-day momentum.

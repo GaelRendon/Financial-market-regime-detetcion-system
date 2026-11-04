@@ -73,8 +73,9 @@ class RegimeInferenceEngine:
         force_refresh: bool = False
     ) -> pd.DataFrame:
         """
-        Download historical price data with smart caching to ensure consistent current price.
-        Automatically falls back to FX rate conversion if direct pair is unavailable on Yahoo Finance.
+        Download historical price data for any asset class (crypto, stocks, commodities, ETFs, indices)
+        with smart caching to ensure consistent current price.
+        Automatically converts to the target fiat currency using live FX rates.
         """
         import time
         cache_key = f"{coin.upper()}_{fiat.upper()}"
@@ -85,37 +86,49 @@ class RegimeInferenceEngine:
             if (now - cached_time) < self.CACHE_TTL_SECONDS:
                 return cached_df.copy()
 
-        direct_ticker = f"{coin}-{fiat}"
-        data = yf.download(direct_ticker, period="max", interval="1d", progress=False)
+        # Build candidate ticker list to try against Yahoo Finance
+        candidates = []
+        # 1. Direct pair: e.g. "BTC-USD", "BTC-EUR"
+        if f"{coin}-{fiat}" not in candidates:
+            candidates.append(f"{coin}-{fiat}")
+        # 2. Bare ticker: e.g. "NVDA", "AAPL", "GC=F", "GLD", "^GSPC", "BTC"
+        if coin not in candidates:
+            candidates.append(coin)
+        # 3. Crypto fallback with -USD (e.g. "BTC" -> "BTC-USD")
+        if f"{coin}-USD" not in candidates:
+            candidates.append(f"{coin}-USD")
 
-        if not data.empty and len(data) > 60:
-            if isinstance(data.columns, pd.MultiIndex):
-                data.columns = data.columns.get_level_values(0)
-            if "Close" in data.columns:
-                data = data[data["Close"] > 0].dropna(subset=["Close"])
-            if len(data) > 60:
-                data.index.name = "Date"
-                self._DATA_CACHE[cache_key] = (now, data)
-                return data.copy()
+        data = pd.DataFrame()
+        matched_ticker = None
+        for cand in candidates:
+            try:
+                df = yf.download(cand, period="max", interval="1d", progress=False)
+                if not df.empty and len(df) > 30:
+                    if isinstance(df.columns, pd.MultiIndex):
+                        df.columns = df.columns.get_level_values(0)
+                    if "Close" in df.columns:
+                        df = df[df["Close"] > 0].dropna(subset=["Close"])
+                        if len(df) > 30:
+                            data = df
+                            matched_ticker = cand
+                            break
+            except Exception:
+                continue
 
-        # Fallback via USD conversion
-        usd_ticker = f"{coin}-USD"
-        data_usd = yf.download(usd_ticker, period="max", interval="1d", progress=False)
-        if data_usd.empty:
-            raise ValueError(f"Could not fetch crypto data for '{coin}'. Please verify the symbol.")
+        if data.empty:
+            raise ValueError(
+                f"Could not fetch market data for '{coin}'. "
+                f"Please verify the ticker symbol on Yahoo Finance (e.g. BTC, NVDA, AAPL, GC=F for Gold)."
+            )
 
-        if isinstance(data_usd.columns, pd.MultiIndex):
-            data_usd.columns = data_usd.columns.get_level_values(0)
+        data.index.name = "Date"
 
-        if "Close" in data_usd.columns:
-            data_usd = data_usd[data_usd["Close"] > 0].dropna(subset=["Close"])
+        # Case A: Ticker was directly quoted in target fiat (e.g. BTC-EUR when fiat is EUR) or already USD
+        if matched_ticker == f"{coin}-{fiat}" or fiat.upper() == "USD":
+            self._DATA_CACHE[cache_key] = (now, data)
+            return data.copy()
 
-        if fiat.upper() == "USD":
-            data_usd.index.name = "Date"
-            self._DATA_CACHE[cache_key] = (now, data_usd)
-            return data_usd.copy()
-
-        # Fetch FX rate (USD to Target Fiat)
+        # Case B: Ticker was quoted in USD (e.g. NVDA, GC=F, BTC-USD) and needs conversion to target fiat (MXN, EUR, GBP, CAD)
         fx_ticker = f"{fiat}=X" if fiat.upper() == "MXN" else f"USD{fiat}=X"
         fx_data = yf.download(fx_ticker, period="max", interval="1d", progress=False)
 
@@ -123,15 +136,17 @@ class RegimeInferenceEngine:
             fx_ticker_alt = f"{fiat}USD=X"
             fx_data = yf.download(fx_ticker_alt, period="max", interval="1d", progress=False)
             if fx_data.empty:
-                raise ValueError(f"Direct ticker '{direct_ticker}' and FX rate for '{fiat}' not found.")
+                # If FX rate fails, return USD data
+                self._DATA_CACHE[cache_key] = (now, data)
+                return data.copy()
             fx_rate = 1.0 / fx_data["Close"]
         else:
             if isinstance(fx_data.columns, pd.MultiIndex):
                 fx_data.columns = fx_data.columns.get_level_values(0)
             fx_rate = fx_data["Close"]
 
-        # Align Dates with left join to prevent dropping crypto weekend/latest trading bars
-        joined = data_usd.join(fx_rate.rename("FX_Rate"), how="left").ffill().bfill()
+        # Align Dates with left join to preserve asset trading days
+        joined = data.join(fx_rate.rename("FX_Rate"), how="left").ffill().bfill()
         converted = pd.DataFrame(index=joined.index)
         for col in ["Open", "High", "Low", "Close", "Adj Close"]:
             if col in joined.columns:
@@ -167,13 +182,23 @@ class RegimeInferenceEngine:
 
     def analyze_ticker(self, ticker: str, period: str = "3y", force_refresh: bool = False) -> Dict[str, Any]:
         """
-        Execute full inference pipeline for any ticker (e.g. BTC-USD, BTC-MXN, ETH-EUR).
+        Execute full inference pipeline for any ticker (Crypto, Stock, Commodity, Index, ETF).
         Fetches full historical data to preserve feature calculation integrity and ensure
         the latest price remains 100% consistent regardless of the chosen lookback window.
         """
-        parts = ticker.split("-")
-        coin = parts[0].strip().upper()
-        fiat = parts[1].strip().upper() if len(parts) > 1 else "USD"
+        known_fiats = {"USD", "MXN", "EUR", "GBP", "CAD"}
+        raw_ticker = ticker.strip().upper()
+        if "-" in raw_ticker:
+            prefix, suffix = raw_ticker.rsplit("-", 1)
+            if suffix in known_fiats:
+                coin = prefix
+                fiat = suffix
+            else:
+                coin = raw_ticker
+                fiat = "USD"
+        else:
+            coin = raw_ticker
+            fiat = "USD"
 
         # 1. Fetch full available data so features and latest prices are stable
         raw_df = self.fetch_live_data(coin=coin, fiat=fiat, period="max", force_refresh=force_refresh)
