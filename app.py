@@ -16,6 +16,9 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 if CURRENT_DIR not in sys.path:
     sys.path.append(CURRENT_DIR)
 
+import importlib
+import src.inference
+importlib.reload(src.inference)
 from src.inference import RegimeInferenceEngine
 
 # Page configuration

@@ -86,17 +86,29 @@ class RegimeInferenceEngine:
             if (now - cached_time) < self.CACHE_TTL_SECONDS:
                 return cached_df.copy()
 
-        # Build candidate ticker list to try against Yahoo Finance
+        # Determine candidate tickers
+        KNOWN_CRYPTOS = {
+            "BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "AVAX", "LINK",
+            "DOT", "MATIC", "POL", "SHIB", "LTC", "BCH", "UNI", "NEAR", "APT", "SUI", "PEPE"
+        }
+        coin_clean = coin.upper().strip()
         candidates = []
-        # 1. Direct pair: e.g. "BTC-USD", "BTC-EUR"
-        if f"{coin}-{fiat}" not in candidates:
-            candidates.append(f"{coin}-{fiat}")
-        # 2. Bare ticker: e.g. "NVDA", "AAPL", "GC=F", "GLD", "^GSPC", "BTC"
-        if coin not in candidates:
-            candidates.append(coin)
-        # 3. Crypto fallback with -USD (e.g. "BTC" -> "BTC-USD")
-        if f"{coin}-USD" not in candidates:
-            candidates.append(f"{coin}-USD")
+        if coin_clean in KNOWN_CRYPTOS:
+            # For known cryptos, prioritize crypto pair with fiat or USD
+            candidates.append(f"{coin_clean}-{fiat}")
+            candidates.append(f"{coin_clean}-USD")
+        elif "-" in coin_clean:
+            # Composite symbol like BTC-USD or BRK-B
+            candidates.append(coin_clean)
+            if f"{coin_clean}-{fiat}" not in candidates:
+                candidates.append(f"{coin_clean}-{fiat}")
+        else:
+            # Equities / Stocks (NVDA, AAPL) or Commodities (GC=F, GLD)
+            candidates.append(coin_clean)
+            if f"{coin_clean}-{fiat}" not in candidates:
+                candidates.append(f"{coin_clean}-{fiat}")
+            if f"{coin_clean}-USD" not in candidates:
+                candidates.append(f"{coin_clean}-USD")
 
         data = pd.DataFrame()
         matched_ticker = None
