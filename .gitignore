@@ -57,6 +57,9 @@ outputs/models/*.pkl
 !outputs/models/.gitkeep
 !outpus
 
+# New implementations
+ideas.md
+
 
 # System agents & local caches
 .agents
