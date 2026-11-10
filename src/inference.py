@@ -58,7 +58,7 @@ class RegimeInferenceEngine:
 
     # In-memory session cache for raw market data: ticker -> (timestamp, df)
     _DATA_CACHE: Dict[str, Tuple[float, pd.DataFrame]] = {}
-    CACHE_TTL_SECONDS: float = 300.0  # 5 minutes
+    CACHE_TTL_SECONDS: float = 3600.0  # 1 hour session cache to lock prices across lookback horizons
 
     def __init__(self, volatility_window: int = 30, momentum_window: int = 14, n_clusters: int = 4):
         self.volatility_window = volatility_window

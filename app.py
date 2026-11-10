@@ -78,16 +78,40 @@ st.markdown("""
         font-weight: 800;
         margin-bottom: 6px;
     }
+    /* Metric Card Enhancements & Anti-Truncation Pop-out */
+    div[data-testid="stMetric"] {
+        background-color: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 12px 14px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+        border-color: #CBD5E1;
+    }
+    div[data-testid="stMetricValue"] {
+        font-size: 1.30rem !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        line-height: 1.25 !important;
+    }
+    div[data-testid="stMetricLabel"] {
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        color: #475569 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
 # Currency symbol helper
 CURRENCY_SYMBOLS = {
     "USD": "$",
-    "MXN": "Mex$",
+    "MXN": "$",
     "EUR": "€",
     "GBP": "£",
-    "CAD": "CA$"
+    "CAD": "$"
 }
 
 def format_crypto_price(value: float, symbol: str = "$") -> str:
@@ -206,22 +230,25 @@ if results:
 
     with tab_analysis:
         # 1. Top Metrics Banner
-        m1, m2, m3, m4, m5 = st.columns(5)
+        m1, m2, m3, m4, m5 = st.columns([1.3, 1.5, 1.1, 0.9, 0.9])
         with m1:
             st.metric(
                 label=f"Current Price ({selected_fiat})",
                 value=format_crypto_price(results['latest_close'], fiat_symbol),
-                delta=f"{results['change_24h_pct']:+.2f}% (24h)"
+                delta=f"{results['change_24h_pct']:+.2f}% (24h)",
+                help=f"Last updated closing price denominated in {selected_fiat}."
             )
         with m2:
             st.metric(
                 label="Current Regime",
-                value=results["current_regime"]
+                value=results["current_regime"],
+                help=f"Active Market Regime: {results['current_regime']}."
             )
         with m3:
             st.metric(
                 label="Regime Persistence",
-                value=f"{results['regime_streak_days']} days active"
+                value=f"{results['regime_streak_days']} days",
+                help="Consecutive days the market has stayed within this regime."
             )
         with m4:
             st.metric(
