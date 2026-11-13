@@ -18,6 +18,7 @@ Rather than predicting future asset prices directly, the project seeks to discov
 - Automated feature engineering for financial time series.
 - Configurable multi-asset architecture.
 - **Rolling Z-Score Normalization (252-day window)** — regime detection relative to recent market conditions, not all-time history.
+- **Modern Packaging with `uv` & `pyproject.toml`** — lightning-fast, reproducible dependency management with cryptographic lockfiles (`uv.lock`).
 - PCA-based dimensionality reduction.
 - K-Means market regime detection.
 - Financial interpretation of identified regimes.
@@ -348,6 +349,46 @@ The source code contains:
 This separation improves reproducibility, maintainability, and scalability.
 
 
+
+---
+
+## Installation & Environment Setup
+
+This project uses [`uv`](https://docs.astral.sh/uv/) for high-performance dependency management and deterministic reproducibility, backed by `pyproject.toml` and `uv.lock`. A synchronized `requirements.txt` is also maintained for zero-configuration deployment to platforms like Streamlit Community Cloud.
+
+### Option A: Using `uv` (Recommended — 10x–100x Faster)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/GaelRendon/Financial-market-regime-detetcion-system.git
+cd Financial-market-regime-detetcion-system
+
+# 2. Sync the virtual environment from uv.lock
+uv sync
+
+# 3. Run the interactive Streamlit dashboard
+uv run streamlit run app.py
+```
+
+To run individual pipeline scripts with `uv`:
+```bash
+uv run python src/pipeline.py
+```
+
+### Option B: Using Standard Python `venv` + `pip`
+
+```bash
+# 1. Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate       # macOS/Linux
+# or: .\.venv\Scripts\Activate.ps1   # Windows PowerShell
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Run the application
+streamlit run app.py
+```
 
 ---
 

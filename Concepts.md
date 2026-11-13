@@ -565,3 +565,51 @@ Using a 1-year rolling window ensures the model's normalization is:
 **Why this matters to us:**
 Rolling z-score normalization eliminates the artificial dependency between the user's visual lookback choice and the model's regime output. The forecast suggestion now reflects the actual current market environment — not an artifact of how much history the user decided to explore.
 
+
+---
+
+## 28. Modern Python Packaging with `uv` & `pyproject.toml`
+
+In computational finance and quantitative research, models frequently suffer from **dependency drift**:
+- A minor release of `pandas` can change date parsing or frequency alignment rules.
+- A new `scikit-learn` version can alter K-Means centroid initialization heuristics or PCA numerical tolerances.
+- Unpinned or loosely pinned dependencies mean code that works today may produce subtly different backtest metrics or fail to install six months later.
+
+### 1. The Traditional Approach vs. Modern Standards
+
+Historically, Python data science projects relied on loose `requirements.txt` files:
+```text
+pandas
+scikit-learn
+yfinance
+```
+While simple, this approach does not record which sub-dependencies (transitive dependencies) were installed, nor does it guarantee cross-platform cryptographic reproducibility.
+
+Modern Python standards (PEP 517, PEP 518, and PEP 621) introduce **`pyproject.toml`** as the single source of truth for:
+- Project metadata (name, version, authors, Python version constraints).
+- Explicit core dependencies and optional developer extras (`dev`).
+- Build system specifications.
+
+### 2. Why Astral `uv`?
+
+[`uv`](https://docs.astral.sh/uv/) is an ultra-fast, Rust-based Python package manager and resolver developed by Astral:
+- **10x–100x Speed Advantage:** Resolves and installs complex data science dependency graphs in seconds.
+- **Cryptographic Lockfile (`uv.lock`):** Records the exact version, platform constraints, and SHA-256 hash of every installed package, guaranteeing byte-for-byte reproducibility across operating systems.
+- **Virtual Environment Management:** Transparently isolates projects with `uv venv` and executes commands safely using `uv run`.
+
+### 3. Dual-Export Strategy for Cloud Deployment
+
+While local execution and institutional pipelines benefit from `uv sync` and `uv.lock`, cloud deployment targets (such as **Streamlit Community Cloud**) require standard `requirements.txt` files.
+
+To achieve maximum reproducibility without sacrificing zero-configuration cloud hosting, the system uses an automated synchronization workflow:
+```bash
+uv export --no-emit-project --no-dev --format requirements-txt -o requirements.txt
+```
+This guarantees that:
+1. `pyproject.toml` and `uv.lock` remain the primary source of truth for developers and researchers.
+2. `requirements.txt` remains strictly in lockstep with the exact versions and hashes tested locally, eliminating cloud deployment surprises.
+
+**Why this matters to us:**
+Adopting `uv` and `pyproject.toml` elevates the repository to current industry best practices, ensuring quantitative results remain reproducible across machines and over time.
+
+
