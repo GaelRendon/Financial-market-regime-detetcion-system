@@ -1,7 +1,7 @@
 """
 Streamlit Web Application: Financial Market Regime Detection System.
 Interactive quantitative dashboard for live multi-asset & multi-currency regime forecasting
-with an optional 7-Day Money Growth Simulator and Power BI export capabilities.
+with an optional 7-Day Money Growth Simulator, Power BI export capabilities, and multi-language (i18n) support.
 """
 
 import os
@@ -18,8 +18,19 @@ if CURRENT_DIR not in sys.path:
 
 import importlib
 import src.inference
+import src.utils.translations
 importlib.reload(src.inference)
+importlib.reload(src.utils.translations)
+
 from src.inference import RegimeInferenceEngine
+from src.utils.translations import (
+    t,
+    translate_regime,
+    translate_action,
+    translate_risk_level,
+    translate_rationale,
+    SUPPORTED_LANGUAGES
+)
 
 # Page configuration
 st.set_page_config(
@@ -102,6 +113,24 @@ st.markdown("""
         font-weight: 600 !important;
         color: #475569 !important;
     }
+    /* Top-Right Language Popover Pill Styling */
+    div[data-testid="stPopover"] button {
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        border: 1px solid #CBD5E1 !important;
+        background-color: #F8FAFC !important;
+        color: #1E293B !important;
+        font-size: 0.90rem !important;
+        padding: 5px 12px !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stPopover"] button:hover {
+        border-color: #3B82F6 !important;
+        color: #1D4ED8 !important;
+        background-color: #EFF6FF !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -115,7 +144,7 @@ CURRENCY_SYMBOLS = {
 }
 
 def format_crypto_price(value: float, symbol: str = "$") -> str:
-    """Format crypto price with adaptive precision so sub-dollar and micro-cap coins don't display $0.00."""
+    """Format asset price with adaptive precision so sub-dollar and micro-cap coins don't display $0.00."""
     abs_val = abs(value)
     if abs_val >= 1.0:
         return f"{symbol}{value:,.2f}"
@@ -128,30 +157,42 @@ def format_crypto_price(value: float, symbol: str = "$") -> str:
     else:
         return f"{symbol}0.00"
 
-# Sidebar inputs
-st.sidebar.title("⚙️ Asset & Horizon")
-st.sidebar.markdown("Configure target financial asset and denomination fiat:")
+# Initialize Language in session state
+if "app_language" not in st.session_state:
+    st.session_state["app_language"] = "en"
+lang = st.session_state["app_language"]
 
-asset_class = st.sidebar.selectbox(
-    "Asset Class",
-    [
-        "🪙 Cryptocurrencies",
-        "🏢 Global Stocks / Equities",
-        "🥇 Commodities & Metals",
-        "📊 Market Indices & ETFs",
-        "🔍 Custom Symbol (Any Ticker)"
-    ],
+# ==========================================
+# SIDEBAR: ASSET CONFIGURATION
+# ==========================================
+st.sidebar.title(t("sidebar_title", lang=lang))
+st.sidebar.markdown(t("sidebar_subtitle", lang=lang))
+
+asset_class_options = [
+    t("asset_class_crypto", lang=lang),
+    t("asset_class_stocks", lang=lang),
+    t("asset_class_commodities", lang=lang),
+    t("asset_class_indices", lang=lang),
+    t("asset_class_custom", lang=lang)
+]
+
+asset_class_choice = st.sidebar.selectbox(
+    t("asset_class_label", lang=lang),
+    asset_class_options,
     index=0
 )
 
-if asset_class == "🪙 Cryptocurrencies":
+# Identify selected asset class based on index
+chosen_index = asset_class_options.index(asset_class_choice)
+
+if chosen_index == 0:
     popular_crypto = ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "AVAX", "LINK"]
-    coin_ticker = st.sidebar.selectbox("Cryptocurrency", popular_crypto, index=0)
-elif asset_class == "🏢 Global Stocks / Equities":
+    coin_ticker = st.sidebar.selectbox(t("select_crypto", lang=lang), popular_crypto, index=0)
+elif chosen_index == 1:
     popular_stocks = ["NVDA (NVIDIA)", "AAPL (Apple)", "GOOGL (Alphabet / Google)", "MSFT (Microsoft)", "AMZN (Amazon)", "TSLA (Tesla)", "META (Meta)"]
-    stock_choice = st.sidebar.selectbox("Stock / Company", popular_stocks, index=0)
+    stock_choice = st.sidebar.selectbox(t("select_stock", lang=lang), popular_stocks, index=0)
     coin_ticker = stock_choice.split()[0]
-elif asset_class == "🥇 Commodities & Metals":
+elif chosen_index == 2:
     popular_commodities = [
         "Gold Futures (GC=F)",
         "SPDR Gold Shares (GLD)",
@@ -159,48 +200,66 @@ elif asset_class == "🥇 Commodities & Metals":
         "Crude Oil Futures (CL=F)",
         "Copper Futures (HG=F)"
     ]
-    comm_choice = st.sidebar.selectbox("Commodity", popular_commodities, index=0)
+    comm_choice = st.sidebar.selectbox(t("select_commodity", lang=lang), popular_commodities, index=0)
     coin_ticker = comm_choice.split("(")[1].replace(")", "").strip()
-elif asset_class == "📊 Market Indices & ETFs":
+elif chosen_index == 3:
     popular_indices = [
         "S&P 500 (^GSPC)",
         "Nasdaq 100 (^NDX)",
         "Dow Jones Industrial (^DJI)"
     ]
-    idx_choice = st.sidebar.selectbox("Market Index", popular_indices, index=0)
+    idx_choice = st.sidebar.selectbox(t("select_index", lang=lang), popular_indices, index=0)
     coin_ticker = idx_choice.split("(")[1].replace(")", "").strip()
 else:
-    coin_ticker = st.sidebar.text_input("Enter Any Yahoo Finance Symbol (e.g. NVDA, GC=F, TSM, BABA)", "NVDA").upper().strip()
+    coin_ticker = st.sidebar.text_input(t("custom_ticker_label", lang=lang), "NVDA").upper().strip()
 
-selected_fiat = st.sidebar.selectbox("Fiat Currency", ["USD", "MXN", "EUR", "GBP", "CAD"], index=0)
+selected_fiat = st.sidebar.selectbox(t("fiat_currency_label", lang=lang), ["USD", "MXN", "EUR", "GBP", "CAD"], index=0)
 fiat_symbol = CURRENCY_SYMBOLS.get(selected_fiat, "$")
 
 full_ticker = f"{coin_ticker}-{selected_fiat}"
 
-horizon_options = {
-    "1 Year": "1y",
-    "2 Years": "2y",
-    "3 Years": "3y",
-    "5 Years": "5y",
-    "Maximum Available": "max"
+horizon_map = {
+    t("horizon_1y", lang=lang): "1y",
+    t("horizon_2y", lang=lang): "2y",
+    t("horizon_3y", lang=lang): "3y",
+    t("horizon_5y", lang=lang): "5y",
+    t("horizon_max", lang=lang): "max"
 }
-selected_horizon_label = st.sidebar.selectbox("Historical Lookback Window", list(horizon_options.keys()), index=2)
-selected_period = horizon_options[selected_horizon_label]
+
+horizon_labels = list(horizon_map.keys())
+selected_horizon_label = st.sidebar.selectbox(t("lookback_window_label", lang=lang), horizon_labels, index=2)
+selected_period = horizon_map[selected_horizon_label]
 
 st.sidebar.markdown("---")
-st.sidebar.markdown("### ℹ️ About the Model")
-st.sidebar.caption(
-    "This system applies **Rolling Z-Score Normalization (252-day window)** to contextualize "
-    "Returns, 30d Volatility, and 14d Momentum relative to recent market conditions — not all-time history. "
-    "**PCA (95% variance)** then reduces these into orthogonal components, **K-Means (K=4)** partitions "
-    "market states, **Markov Chains** model regime persistence, and **Random Forest** forecasts the next regime."
-)
+st.sidebar.markdown(f"### {t('about_model_title', lang=lang)}")
+st.sidebar.caption(t("about_model_caption", lang=lang))
 
-run_button = st.sidebar.button("🚀 Run Live Analysis", type="primary", use_container_width=True)
+run_button = st.sidebar.button(t("run_button", lang=lang), type="primary", use_container_width=True)
 
-# App Header
-st.markdown("<div class='main-header'>📈 Financial Market Regime Detection System</div>", unsafe_allow_html=True)
-st.markdown(f"<div class='sub-header'>Live quantitative regime identification, probabilistic forecasting, and automated risk allocation for <b>{full_ticker}</b></div>", unsafe_allow_html=True)
+# Top Header Bar: Title on Left, Language Popover Pill on Top-Right
+col_header, col_lang = st.columns([0.88, 0.12])
+with col_header:
+    st.markdown(f"<div class='main-header'>{t('main_header', lang=lang)}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='sub-header'>{t('sub_header', lang=lang, ticker=full_ticker)}</div>", unsafe_allow_html=True)
+
+with col_lang:
+    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+    with st.popover(f"🌐 {lang.upper()}", use_container_width=True):
+        st.caption(f"**{t('sidebar_language', lang=lang)}**")
+        current_option = SUPPORTED_LANGUAGES.get(lang, "EN (English)")
+        lang_options = list(SUPPORTED_LANGUAGES.values())
+        
+        selected_option = st.radio(
+            "Select language:",
+            lang_options,
+            index=lang_options.index(current_option) if current_option in lang_options else 0,
+            label_visibility="collapsed"
+        )
+        
+        new_lang = "en" if selected_option.startswith("EN") else "es"
+        if new_lang != lang:
+            st.session_state["app_language"] = new_lang
+            st.rerun()
 
 # Run Inference Engine
 if (
@@ -209,7 +268,7 @@ if (
     or st.session_state.get("last_ticker") != full_ticker
     or st.session_state.get("last_period") != selected_period
 ):
-    with st.spinner(f"Fetching market data for {full_ticker} and executing quantitative pipeline..."):
+    with st.spinner(t("spinner_fetching", lang=lang, ticker=full_ticker)):
         try:
             engine = RegimeInferenceEngine()
             results = engine.analyze_ticker(full_ticker, period=selected_period, force_refresh=run_button)
@@ -225,40 +284,42 @@ results = st.session_state.get("inference_results")
 if results:
     # Top-Level Tabs: Analysis & Optional 7-Day Money Growth Simulator
     tab_analysis, tab_simulator = st.tabs([
-        "📊 Live Market Regime Analysis",
-        "🔮 7-Day Money Growth Simulator (Optional)"
+        t("tab_analysis", lang=lang),
+        t("tab_simulator", lang=lang)
     ])
 
     with tab_analysis:
         # 1. Top Metrics Banner
         m1, m2, m3, m4, m5 = st.columns([1.3, 1.5, 1.1, 0.9, 0.9])
+        translated_curr_regime = translate_regime(results["current_regime"], lang=lang)
+
         with m1:
             st.metric(
-                label=f"Current Price ({selected_fiat})",
+                label=t("metric_current_price", lang=lang, fiat=selected_fiat),
                 value=format_crypto_price(results['latest_close'], fiat_symbol),
                 delta=f"{results['change_24h_pct']:+.2f}% (24h)",
-                help=f"Last updated closing price denominated in {selected_fiat}."
+                help=t("metric_current_price_help", lang=lang, fiat=selected_fiat)
             )
         with m2:
             st.metric(
-                label="Current Regime",
-                value=results["current_regime"],
-                help=f"Active Market Regime: {results['current_regime']}."
+                label=t("metric_current_regime", lang=lang),
+                value=translated_curr_regime,
+                help=t("metric_current_regime_help", lang=lang, regime=translated_curr_regime)
             )
         with m3:
             st.metric(
-                label="Regime Persistence",
-                value=f"{results['regime_streak_days']} days",
-                help="Consecutive days the market has stayed within this regime."
+                label=t("metric_persistence", lang=lang),
+                value=f"{results['regime_streak_days']} {t('days_suffix', lang=lang)}",
+                help=t("metric_persistence_help", lang=lang)
             )
         with m4:
             st.metric(
-                label="30-Day Volatility",
+                label=t("metric_volatility", lang=lang),
                 value=f"{results['current_volatility_pct']:.2f}%"
             )
         with m5:
             st.metric(
-                label="14-Day Momentum",
+                label=t("metric_momentum", lang=lang),
                 value=f"{results['current_momentum_pct']:+.2f}%"
             )
 
@@ -269,29 +330,42 @@ if results:
         badge_color = rec["badge_color"]
         css_class = f"action-box action-box-{badge_color}"
 
+        translated_forecast_regime = translate_regime(results["forecast_regime"], lang=lang)
+        translated_action = translate_action(rec["action"], lang=lang)
+        translated_risk_level = translate_risk_level(rec["risk_level"], lang=lang)
+        translated_rationale = translate_rationale(results["forecast_regime"], lang=lang, default_text=rec["rationale"])
+
         col_action, col_prob = st.columns([1.2, 1.0])
 
         with col_action:
+            action_color = "#047857" if badge_color=="green" else "#1D4ED8" if badge_color=="blue" else "#B45309" if badge_color=="orange" else "#B91C1C"
+            exposure_text = t("exposure_suffix", lang=lang, pct=int(rec['position']*100))
+            
             st.markdown(f"""
             <div class='{css_class}'>
                 <div style='font-size: 0.95rem; font-weight: 600; text-transform: uppercase; color: #475569;'>
-                    Tomorrow's Forecasted Regime: <span style='font-weight: 800;'>{results['forecast_regime']}</span>
+                    {t('forecast_heading', lang=lang)} <span style='font-weight: 800;'>{translated_forecast_regime}</span>
                 </div>
-                <div class='action-title' style='color: {"#047857" if badge_color=="green" else "#1D4ED8" if badge_color=="blue" else "#B45309" if badge_color=="orange" else "#B91C1C"};'>
-                    🎯 SUGGESTION: {rec['action']} ({int(rec['position']*100)}% Exposure)
+                <div class='action-title' style='color: {action_color};'>
+                    {t('suggestion_heading', lang=lang)} {translated_action} ({exposure_text})
                 </div>
                 <div style='margin-bottom: 8px;'>
-                    <b>Risk Level:</b> {rec['risk_level']}
+                    <b>{t('risk_level_label', lang=lang)}</b> {translated_risk_level}
                 </div>
                 <div style='font-size: 0.95rem; line-height: 1.5; color: #334155;'>
-                    {rec['rationale']}
+                    {translated_rationale}
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
         with col_prob:
             probs = results["forecast_probabilities"]
-            prob_df = pd.DataFrame(list(probs.items()), columns=["Regime", "Probability"]).sort_values(by="Probability", ascending=True)
+            # Translate regime names in the probability chart
+            prob_records = [
+                {"Regime": translate_regime(r, lang=lang), "RawRegime": r, "Probability": p}
+                for r, p in probs.items()
+            ]
+            prob_df = pd.DataFrame(prob_records).sort_values(by="Probability", ascending=True)
 
             fig_prob = go.Figure()
             colors = {
@@ -300,7 +374,7 @@ if results:
                 "High-Volatility Transition": "#F59E0B",
                 "High-Volatility Bearish": "#EF4444"
             }
-            bar_colors = [colors.get(r, "#64748B") for r in prob_df["Regime"]]
+            bar_colors = [colors.get(r, "#64748B") for r in prob_df["RawRegime"]]
 
             fig_prob.add_trace(go.Bar(
                 y=prob_df["Regime"],
@@ -311,8 +385,8 @@ if results:
                 textposition="auto"
             ))
             fig_prob.update_layout(
-                title=f"Forecast Confidence Distribution ({full_ticker})",
-                xaxis_title="Probability (%)",
+                title=t("chart_forecast_confidence_title", lang=lang, ticker=full_ticker),
+                xaxis_title=t("chart_probability_axis", lang=lang),
                 yaxis_title="",
                 margin=dict(l=10, r=10, t=40, b=10),
                 height=260
@@ -320,7 +394,7 @@ if results:
             st.plotly_chart(fig_prob, use_container_width=True)
 
         # 3. Interactive Historical Regime Chart
-        st.markdown("### 📊 Historical Market Regime Timeline")
+        st.markdown(t("timeline_section_title", lang=lang))
         hist_df = results["df_history"]
 
         fig_price = go.Figure()
@@ -339,7 +413,7 @@ if results:
                     x=hist_df.index[mask],
                     y=hist_df["Close"][mask],
                     mode="markers",
-                    name=r_name,
+                    name=translate_regime(r_name, lang=lang),
                     marker=dict(size=4, color=r_color)
                 ))
 
@@ -347,15 +421,15 @@ if results:
             x=hist_df.index,
             y=hist_df["Close"],
             mode="lines",
-            name="Close Price",
+            name=t("timeline_close_price", lang=lang),
             line=dict(color="#94A3B8", width=1),
             opacity=0.7
         ))
 
         fig_price.update_layout(
-            title=f"{full_ticker} Daily Price History with Detected Regimes",
-            xaxis_title="Date",
-            yaxis_title=f"Price ({selected_fiat})",
+            title=t("timeline_chart_title", lang=lang, ticker=full_ticker),
+            xaxis_title=t("timeline_chart_date", lang=lang),
+            yaxis_title=t("timeline_chart_price", lang=lang, fiat=selected_fiat),
             hovermode="x unified",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
             height=450,
@@ -364,8 +438,12 @@ if results:
         st.plotly_chart(fig_price, use_container_width=True)
 
         # 4. Feature Decomposition Tabs
-        st.markdown("### 🔍 Engineered Feature Dynamics")
-        f_tab1, f_tab2, f_tab3 = st.tabs(["Daily Returns", "30-Day Volatility", "14-Day Momentum"])
+        st.markdown(t("features_section_title", lang=lang))
+        f_tab1, f_tab2, f_tab3 = st.tabs([
+            t("features_tab_returns", lang=lang),
+            t("features_tab_volatility", lang=lang),
+            t("features_tab_momentum", lang=lang)
+        ])
 
         with f_tab1:
             fig_ret = go.Figure()
@@ -373,11 +451,11 @@ if results:
                 x=hist_df.index,
                 y=hist_df["Returns"] * 100,
                 mode="lines",
-                name="Daily Return (%)",
+                name=t("features_chart_return_axis", lang=lang),
                 line=dict(color="#6366F1", width=1)
             ))
             fig_ret.add_hline(y=0, line_dash="dash", line_color="gray")
-            fig_ret.update_layout(height=300, yaxis_title="Daily Return (%)", margin=dict(l=10, r=10, t=20, b=10))
+            fig_ret.update_layout(height=300, yaxis_title=t("features_chart_return_axis", lang=lang), margin=dict(l=10, r=10, t=20, b=10))
             st.plotly_chart(fig_ret, use_container_width=True)
 
         with f_tab2:
@@ -386,10 +464,10 @@ if results:
                 x=hist_df.index,
                 y=hist_df["Volatility"] * 100,
                 mode="lines",
-                name="30d Rolling Volatility (%)",
+                name=t("features_chart_vol_axis", lang=lang),
                 line=dict(color="#EC4899", width=1.5)
             ))
-            fig_vol.update_layout(height=300, yaxis_title="Volatility (%)", margin=dict(l=10, r=10, t=20, b=10))
+            fig_vol.update_layout(height=300, yaxis_title=t("features_chart_vol_axis", lang=lang), margin=dict(l=10, r=10, t=20, b=10))
             st.plotly_chart(fig_vol, use_container_width=True)
 
         with f_tab3:
@@ -398,60 +476,60 @@ if results:
                 x=hist_df.index,
                 y=hist_df["Momentum"] * 100,
                 mode="lines",
-                name="14d Price Momentum (%)",
+                name=t("features_chart_mom_axis", lang=lang),
                 line=dict(color="#14B8A6", width=1.5)
             ))
             fig_mom.add_hline(y=0, line_dash="dash", line_color="gray")
-            fig_mom.update_layout(height=300, yaxis_title="Momentum (%)", margin=dict(l=10, r=10, t=20, b=10))
+            fig_mom.update_layout(height=300, yaxis_title=t("features_chart_mom_axis", lang=lang), margin=dict(l=10, r=10, t=20, b=10))
             st.plotly_chart(fig_mom, use_container_width=True)
 
         # 5. Markov Transition Analysis
         st.markdown("---")
-        st.markdown("### 🔄 Markov Regime Transition Dynamics")
+        st.markdown(t("markov_section_title", lang=lang))
         col_mat, col_pers = st.columns([1.2, 1.0])
 
         with col_mat:
             tm = results["transition_matrix"]
+            translated_cols = [translate_regime(c, lang=lang) for c in tm.columns]
+            translated_index = [translate_regime(i, lang=lang) for i in tm.index]
+
             fig_tm = go.Figure(data=go.Heatmap(
                 z=tm.values * 100,
-                x=tm.columns,
-                y=tm.index,
+                x=translated_cols,
+                y=translated_index,
                 colorscale="Blues",
                 text=[[f"{val*100:.1f}%" for val in row] for row in tm.values],
                 texttemplate="%{text}",
                 hoverongaps=False
             ))
             fig_tm.update_layout(
-                title="Historical 1-Day Transition Probabilities (%)",
-                xaxis_title="Next Day Regime (t+1)",
-                yaxis_title="Current Regime (t)",
+                title=t("markov_heatmap_title", lang=lang),
+                xaxis_title=t("markov_next_day_axis", lang=lang),
+                yaxis_title=t("markov_current_day_axis", lang=lang),
                 height=320,
                 margin=dict(l=10, r=10, t=40, b=10)
             )
             st.plotly_chart(fig_tm, use_container_width=True)
 
         with col_pers:
-            st.markdown("#### Regime Persistence")
+            st.markdown(t("markov_persistence_title", lang=lang))
             pers = results["persistence_stats"]
             pers_rows = []
             for reg, vals in pers.items():
                 pers_rows.append({
-                    "Regime": reg,
-                    "Self-Transition Prob": f"{vals['self_transition_prob']}%",
-                    "Expected Duration": f"{vals['expected_duration_days']} days"
+                    t("table_col_regime", lang=lang): translate_regime(reg, lang=lang),
+                    t("table_col_self_prob", lang=lang): f"{vals['self_transition_prob']}%",
+                    t("table_col_exp_duration", lang=lang): f"{vals['expected_duration_days']} {t('days_suffix', lang=lang)}"
                 })
             pers_table = pd.DataFrame(pers_rows)
-            st.markdown("<b>Expected Holding Duration:</b>", unsafe_allow_html=True)
+            st.markdown(t("markov_expected_holding", lang=lang), unsafe_allow_html=True)
             st.dataframe(pers_table, use_container_width=True, hide_index=True)
-            st.caption("Expected duration indicates how many consecutive days the market typically remains inside that state before shifting.")
+            st.caption(t("markov_caption", lang=lang))
 
         # 6. Power BI & Excel Export
         st.markdown("---")
-        st.markdown("### 📥 Export Dataset for Power BI / Excel")
-        st.markdown(
-            "You can export this analyzed dataset directly into a standardized CSV file ready to connect into "
-            "**Power BI**, **Excel**, or SQL databases:"
-        )
+        st.markdown(t("export_section_title", lang=lang))
+        st.markdown(t("export_description", lang=lang))
 
         export_df = hist_df.copy().reset_index()
         export_df["Asset"] = coin_ticker
@@ -466,7 +544,7 @@ if results:
         csv_data = export_df.to_csv(index=False).encode("utf-8")
 
         st.download_button(
-            label=f"💾 Download {full_ticker} Regime Dataset (CSV for Power BI)",
+            label=t("export_button", lang=lang, ticker=full_ticker),
             data=csv_data,
             file_name=f"{full_ticker.lower()}_regime_analysis_powerbi.csv",
             mime="text/csv",
@@ -477,24 +555,17 @@ if results:
     # TAB 2: OPTIONAL 7-DAY MONEY GROWTH SIMULATOR
     # ==========================================
     with tab_simulator:
-        st.markdown("### 🔮 7-Day Forward Capital Growth Simulator")
-        st.markdown(
-            f"This optional simulator projects how an investment in **{coin_ticker}** (denominated in **{selected_fiat}**) "
-            f"could behave over the next 7 days based on our machine learning regime forecast, empirical Markov chain transitions, "
-            f"and 1,000 Monte Carlo statistical simulation paths."
-        )
+        st.markdown(t("sim_title", lang=lang))
+        st.markdown(t("sim_description", lang=lang, coin=coin_ticker, fiat=selected_fiat))
 
         # Prominent Mandatory Disclaimer Banner
-        st.markdown("""
+        st.markdown(f"""
         <div style="background-color: #FEF3C7; border-left: 6px solid #D97706; padding: 18px 22px; border-radius: 8px; margin-top: 10px; margin-bottom: 25px;">
             <div style="font-size: 1.15rem; font-weight: 800; color: #92400E; margin-bottom: 6px;">
-                ⚠️ IMPORTANT DISCLAIMER: It's a prediction, not a statement — take your own risk.
+                {t('sim_disclaimer_title', lang=lang)}
             </div>
             <div style="font-size: 0.95rem; color: #78350F; line-height: 1.5;">
-                Cryptocurrency and financial markets are inherently volatile, speculative, and subject to unexpected external macroeconomic events. 
-                This simulation represents a <b>probabilistic statistical model</b> conditioned on historical regime dynamics. 
-                <b>It does NOT represent a factual statement, guaranteed performance, or professional financial advice.</b> 
-                Any capital you invest carries risk of partial or total loss. Always exercise independent diligence and strictly manage your downside risk.
+                {t('sim_disclaimer_body', lang=lang)}
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -503,7 +574,7 @@ if results:
         with col_input1:
             default_capital = 10000.0 if selected_fiat == "MXN" else 1000.0
             user_capital = st.number_input(
-                f"Enter hypothetical investment amount in {selected_fiat} ({fiat_symbol}):",
+                t("sim_input_capital", lang=lang, fiat=selected_fiat, symbol=fiat_symbol),
                 min_value=1.0,
                 max_value=100000000.0,
                 value=default_capital,
@@ -513,7 +584,7 @@ if results:
 
         with col_input2:
             st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-            run_sim = st.button("🚀 Calculate 7-Day Money Projection", type="primary", use_container_width=True)
+            run_sim = st.button(t("sim_button", lang=lang), type="primary", use_container_width=True)
 
         # Simulation execution
         if run_sim or "sim_result" not in st.session_state or st.session_state.get("sim_ticker") != full_ticker or st.session_state.get("sim_capital") != user_capital:
@@ -536,30 +607,30 @@ if results:
             s1, s2, s3, s4 = st.columns(4)
             with s1:
                 st.metric(
-                    label="Starting Capital",
+                    label=t("sim_starting_capital", lang=lang),
                     value=f"{fiat_symbol}{sim['initial_capital']:,.2f}"
                 )
             with s2:
                 st.metric(
-                    label="Expected Capital (Day 7)",
+                    label=t("sim_expected_capital", lang=lang),
                     value=f"{fiat_symbol}{sim['final_expected_capital']:,.2f}",
                     delta=f"{sim['final_pct_return']:+.2f}%"
                 )
             with s3:
                 st.metric(
-                    label="Projected Net P&L",
+                    label=t("sim_projected_pnl", lang=lang),
                     value=f"{fiat_symbol}{sim['final_net_profit']:+,.2f}",
                     delta=f"{sim['final_pct_return']:+.2f}%"
                 )
             with s4:
                 st.metric(
-                    label="90% Confidence Corridor",
+                    label=t("sim_confidence_corridor", lang=lang),
                     value=f"{fiat_symbol}{sim['lower_bound_10th']:,.0f} - {fiat_symbol}{sim['upper_bound_90th']:,.0f}",
-                    help="Range spanning the 10th percentile (defensive adverse scenario) to 90th percentile (optimistic bullish scenario)."
+                    help=t("sim_confidence_corridor_help", lang=lang)
                 )
 
             # 2. 7-Day Forward Trajectory Chart
-            st.markdown("#### 📈 7-Day Projected Capital Trajectory")
+            st.markdown(f"#### 📈 {t('sim_title', lang=lang).replace('### 🔮 ', '')}")
             dates_list = sim["dates"]
             corridors = sim["corridors"]
 
@@ -574,7 +645,7 @@ if results:
                 line=dict(color="rgba(255, 255, 255, 0)"),
                 hoverinfo="skip",
                 showlegend=True,
-                name="80% Confidence Interval (10th–90th Pct)"
+                name=t("sim_legend_80ci", lang=lang)
             ))
 
             # Shaded 25th to 75th percentile corridor (interquartile range)
@@ -586,7 +657,7 @@ if results:
                 line=dict(color="rgba(255, 255, 255, 0)"),
                 hoverinfo="skip",
                 showlegend=True,
-                name="50% Core Interquartile Range (25th–75th Pct)"
+                name=t("sim_legend_50ci", lang=lang)
             ))
 
             # Expected (Mean) Trajectory
@@ -594,7 +665,7 @@ if results:
                 x=dates_list,
                 y=corridors["mean"],
                 mode="lines+markers",
-                name="Expected Balance (Mean)",
+                name=t("sim_legend_mean", lang=lang),
                 line=dict(color="#1D4ED8", width=3),
                 marker=dict(size=6)
             ))
@@ -604,7 +675,7 @@ if results:
                 x=dates_list,
                 y=corridors["p50"],
                 mode="lines",
-                name="Median Balance (50th Pct)",
+                name=t("sim_legend_median", lang=lang),
                 line=dict(color="#10B981", width=2, dash="dot")
             ))
 
@@ -613,14 +684,14 @@ if results:
                 y=user_capital,
                 line_dash="dash",
                 line_color="#94A3B8",
-                annotation_text=f"Initial Capital ({fiat_symbol}{user_capital:,.2f})",
+                annotation_text=f"{t('sim_initial_baseline', lang=lang, symbol=fiat_symbol, capital=user_capital)}",
                 annotation_position="bottom right"
             )
 
             fig_sim.update_layout(
-                title=f"7-Day Forward Money Growth Simulation for {fiat_symbol}{user_capital:,.2f} in {full_ticker}",
-                xaxis_title="Forecast Horizon Date",
-                yaxis_title=f"Projected Balance ({selected_fiat})",
+                title=t("sim_chart_title", lang=lang, symbol=fiat_symbol, capital=user_capital, ticker=full_ticker),
+                xaxis_title=t("sim_chart_date_axis", lang=lang),
+                yaxis_title=t("sim_chart_balance_axis", lang=lang, fiat=selected_fiat),
                 hovermode="x unified",
                 legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
                 height=420,
@@ -629,7 +700,7 @@ if results:
             st.plotly_chart(fig_sim, use_container_width=True)
 
             # 3. Day-by-Day Forecast Breakdown Table
-            st.markdown("#### 📅 Day-by-Day Forecast Summary Table")
+            st.markdown(t("sim_table_title", lang=lang))
             b_df = sim["breakdown_df"].copy()
             
             b_display = b_df.copy()
@@ -640,13 +711,28 @@ if results:
             b_display["Exp. Daily Return (%)"] = b_display["Exp. Daily Return (%)"].apply(lambda v: f"{v:+.2f}%")
             b_display["Cumulative Return (%)"] = b_display["Cumulative Return (%)"].apply(lambda v: f"{v:+.2f}%")
             b_display["Confidence (%)"] = b_display["Confidence (%)"].apply(lambda v: f"{v:.1f}%")
+            b_display["Predicted_Regime"] = b_display["Predicted_Regime"].apply(lambda r: translate_regime(r, lang=lang))
+
+            # Translate table headers
+            b_display = b_display.rename(columns={
+                "Day": t("col_day", lang=lang),
+                "Date": t("col_date", lang=lang),
+                "Predicted_Regime": t("col_pred_regime", lang=lang),
+                "Confidence (%)": t("col_confidence", lang=lang),
+                "Exp. Daily Return (%)": t("col_daily_ret", lang=lang),
+                "Projected Capital": t("col_proj_cap", lang=lang),
+                "Lower Bound (10th)": t("col_lower_10", lang=lang),
+                "Upper Bound (90th)": t("col_upper_90", lang=lang),
+                "Cumulative P&L": t("col_cum_pnl", lang=lang),
+                "Cumulative Return (%)": t("col_cum_ret", lang=lang)
+            })
 
             st.dataframe(b_display, use_container_width=True, hide_index=True)
 
             # 4. CSV Download for Simulation
             sim_csv = b_df.to_csv(index=False).encode("utf-8")
             st.download_button(
-                label=f"💾 Download 7-Day Projection Report ({selected_fiat})",
+                label=t("sim_download_button", lang=lang, fiat=selected_fiat),
                 data=sim_csv,
                 file_name=f"{full_ticker.lower()}_7day_simulation_{selected_fiat.lower()}.csv",
                 mime="text/csv",
