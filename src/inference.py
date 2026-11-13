@@ -9,7 +9,7 @@ from typing import Dict, Any, Tuple
 import numpy as np
 import pandas as pd
 import yfinance as yf
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import LabelEncoder
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
@@ -19,7 +19,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from config.config import RANDOM_SEED
+from config.config import RANDOM_SEED, ROLLING_NORM_WINDOW
 
 
 class RegimeInferenceEngine:
@@ -237,10 +237,50 @@ class RegimeInferenceEngine:
         if len(clean_data) < 80:
             raise ValueError(f"Not enough observations ({len(clean_data)}) to build models for {ticker}.")
 
-        # 3. Standardize & PCA
+        # 3. Rolling Z-Score Normalization (Option D)
+        # ─────────────────────────────────────────────────────────────────────
+        # WHY rolling instead of global StandardScaler?
+        #
+        # Global StandardScaler fits mu and sigma on the ENTIRE training window.
+        # For long-history assets like BTC (7+ years), the extreme cycles of
+        # 2017-2018 and 2021-2022 dominate that global sigma.  As a result,
+        # today's genuinely elevated volatility appears "small" when compared
+        # against those historical peaks → the model always outputs Neutral.
+        #
+        # Rolling z-score fixes this by computing mu and sigma over a sliding
+        # ROLLING_NORM_WINDOW-day window (default 252 trading days ≈ 1 year).
+        # For each day t, the z-score is:
+        #
+        #   z_j(t) = (x_j(t) − μ_j[t−w, t]) / σ_j[t−w, t]
+        #
+        # This makes "high volatility" always mean "high relative to the past
+        # year's norms" — a stable, recency-aware reference frame that produces
+        # consistent regime reads regardless of which lookback window the user
+        # selects in the UI.
+        # ─────────────────────────────────────────────────────────────────────
         feat_cols = ["Returns", "Volatility", "Momentum"]
-        scaler = StandardScaler()
-        scaled = scaler.fit_transform(clean_data[feat_cols])
+        norm_window = ROLLING_NORM_WINDOW  # 252 days
+
+        roll_mean = clean_data[feat_cols].rolling(window=norm_window, min_periods=max(30, norm_window // 4)).mean()
+        roll_std  = clean_data[feat_cols].rolling(window=norm_window, min_periods=max(30, norm_window // 4)).std()
+
+        # Avoid division by zero: replace zero/NaN std with a small fallback
+        roll_std = roll_std.replace(0, np.nan).fillna(1e-8)
+
+        # Element-wise z-score using the rolling statistics
+        scaled_df = (clean_data[feat_cols] - roll_mean) / roll_std
+
+        # Drop any rows where the rolling window didn't yet have enough data
+        clean_data = clean_data.loc[scaled_df.dropna().index].copy()
+        scaled_df  = scaled_df.dropna()
+
+        if len(clean_data) < 80:
+            raise ValueError(
+                f"Not enough observations after rolling normalization ({len(clean_data)}) "
+                f"for {ticker}. Try a longer lookback window."
+            )
+
+        scaled = scaled_df.values
 
         pca = PCA(n_components=min(3, len(feat_cols)))
         pca_proj = pca.fit_transform(scaled)

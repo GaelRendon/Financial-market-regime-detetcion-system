@@ -5,12 +5,13 @@ Feature scaling module using StandardScaler.
 import os
 import pickle
 from typing import Optional, Tuple
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 
 class DataScaler:
-    """Standardizes feature matrices to zero mean and unit variance."""
+    """Standardizes feature matrices to zero mean and unit variance via global or rolling normalization."""
 
     def __init__(self, models_path: str = "../outputs/models"):
         self.models_path = models_path
@@ -26,6 +27,26 @@ class DataScaler:
             columns=df.columns
         )
         return scaled_df, self.scaler
+
+    def rolling_transform(
+        self,
+        df: pd.DataFrame,
+        window: int = 252,
+        min_periods: Optional[int] = None
+    ) -> pd.DataFrame:
+        """
+        Standardize features using causal rolling z-scores over the specified window (default: 252 days).
+        Ensures local variance adaptation and eliminates historical regime dominance bias.
+        """
+        if min_periods is None:
+            min_periods = max(30, window // 4)
+
+        roll_mean = df.rolling(window=window, min_periods=min_periods).mean()
+        roll_std = df.rolling(window=window, min_periods=min_periods).std()
+        roll_std = roll_std.replace(0, np.nan).fillna(1e-8)
+
+        scaled_df = (df - roll_mean) / roll_std
+        return scaled_df.dropna()
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Transform new data using the pre-fitted scaler."""

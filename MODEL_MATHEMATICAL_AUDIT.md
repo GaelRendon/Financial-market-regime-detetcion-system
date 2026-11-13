@@ -13,7 +13,7 @@ This audit establishes the formal mathematical and statistical framework underly
 ```mermaid
 flowchart LR
     A["Raw Stochastic Process (P_t, V_t)"] --> B["Stationary Filtrations (r_t, sigma_t, M_t)"]
-    B --> C["Metric Space Standardization Z"]
+    B --> C["Rolling Z-Score Normalization (w=252d)"]
     C --> D["Orthogonal Subspace Projection (PCA)"]
     D --> E["Non-Convex Centroid Minimization (K-Means)"]
     E --> F["First-Order Markov Chain Dynamics"]
@@ -87,19 +87,65 @@ The feature design matrix for $N = T - \max(w_v, w_m)$ samples is $\mathbf{X} \i
 
 ---
 
-## 3. Metric Space Normalization & Standardized Projection
+## 3. Metric Space Normalization: Rolling Z-Score Standardization
 
 Distance-based clustering algorithms rely on the Euclidean metric $d_2(\mathbf{u}, \mathbf{v}) = \|\mathbf{u} - \mathbf{v}\|_2$. If variables have disparate scales:
 $$\text{Var}(M_t) \gg \text{Var}(r_t)$$
 the metric tensor collapses into a degenerate one-dimensional subspace dominated by momentum.
 
-### 3.1 Z-Score Transformation
-Let $\mu_j$ and $s_j$ denote the sample mean and sample standard deviation of column $j \in \{1, \dots, d\}$:
-$$\mu_j = \frac{1}{N} \sum_{i=1}^N X_{ij}, \quad s_j = \sqrt{ \frac{1}{N - 1} \sum_{i=1}^N (X_{ij} - \mu_j)^2 }$$
-The normalized matrix $\mathbf{Z} \in \mathbb{R}^{N \times d}$ has elements:
-$$Z_{ij} = \frac{X_{ij} - \mu_j}{s_j}$$
-Such that:
-$$\mathbb{E}[\mathbf{z}_j] = 0, \quad \text{Var}(\mathbf{z}_j) = 1, \quad \forall j \in \{1, \dots, d\}$$
+### 3.1 Motivation: The Global Standardization Failure
+
+A naive global z-score computes a single $\mu_j$ and $s_j$ over the entire training window $\{1, \dots, N\}$:
+$$Z_{ij}^{\text{global}} = \frac{X_{ij} - \mu_j}{s_j}$$
+
+For long-history assets (e.g., BTC with 7+ years), this estimator is dominated by **structural distributional shifts** between market epochs. The extreme variance of 2017–2018 and 2021–2022 inflates $s_j$ so severely that current-period observations — which may be genuinely elevated in volatility — receive near-zero z-scores and are systematically classified as low-volatility neutral states.
+
+**Formal failure condition:** The global estimator is biased whenever the data-generating process $\{X_{ij}\}$ is **non-stationary in variance** (a well-documented property of financial time series, related to ARCH/GARCH effects and volatility clustering).
+
+### 3.2 Rolling Z-Score Transformation (Implemented Solution)
+
+Let $w = 252$ trading days (≈ 1 calendar year — the standard annualization convention in quantitative finance). For each observation $t$ and feature $j$, define the **causal rolling mean** and **causal rolling standard deviation**:
+
+$$\bar{x}_j(t) = \frac{1}{w} \sum_{i=0}^{w-1} X_{(t-i), j}, \qquad s_j(t) = \sqrt{\frac{1}{w-1} \sum_{i=0}^{w-1} \left(X_{(t-i),j} - \bar{x}_j(t)\right)^2}$$
+
+The normalized element is:
+$$Z_{tj} = \frac{X_{tj} - \bar{x}_j(t)}{s_j(t)}$$
+
+#### Mathematical Properties & Audit Criteria:
+
+1. **Causality (No Look-Ahead Bias):** $Z_{tj}$ depends only on $\{X_{(t-i),j}\}_{i=0}^{w-1} \in \mathcal{F}_t$. No future information is used.
+
+2. **Local Stationarity:** By restricting the normalization window to $w = 252$ days, the estimator adapts to local distributional regimes. If the market enters a structurally high-variance period, $s_j(t)$ increases accordingly — preserving the relative signal within recent conditions.
+
+3. **Recency-Aware Reference Frame:** A volatility reading of $\sigma_t = 1.5\%$ on a day when the past-year rolling average is $\bar{\sigma} = 0.8\%$ yields:
+$$Z_{\sigma}(t) = \frac{0.015 - 0.008}{s_\sigma(t)} > 0 \quad \Rightarrow \quad \text{correctly detected as above-average volatility}$$
+Under a global scaler calibrated on 2021 data where $s_\sigma^{\text{global}} \approx 0.04$, the same reading would yield $Z \approx 0.175$ — near-zero, incorrectly classified as neutral.
+
+4. **Fallback for Short History:** When $t < w$, a minimum of $\lfloor w/4 \rfloor = 63$ observations (≈ one quarter) is required. Rows with insufficient history are dropped before PCA and K-Means to prevent improperly normalized inputs from corrupting the cluster geometry.
+
+5. **Zero-Variance Guard:** When $s_j(t) = 0$ (e.g., a price series with zero daily movement for $w$ days — practically impossible in liquid markets but theoretically possible), the denominator is replaced by $\epsilon = 10^{-8}$ to prevent undefined normalization.
+
+6. **Distributional Result:** The normalized series satisfies $\mathbb{E}[Z_{tj}] \approx 0$ and $\text{Var}(Z_{tj}) \approx 1$ **within each rolling window**, ensuring the PCA covariance matrix $\mathbf{\Sigma}$ remains well-conditioned and each feature contributes equitably to the orthogonal decomposition.
+
+### 3.3 Why $w = 252$?
+
+| Consideration | Justification |
+|---|---|
+| **Statistical stability** | 252 observations far exceed the minimum needed for a reliable variance estimate (CLT guarantees approximate normality of $\bar{x}$ for $n \ge 30$) |
+| **Economic memory** | One year captures approximately one full business cycle phase without being distorted by regime shifts from 2–3 years prior |
+| **Industry convention** | 252 trading days is the universal annualization constant in quantitative finance ($\sigma_{\text{annual}} = \sigma_{\text{daily}} \times \sqrt{252}$) |
+| **Regime sensitivity** | Short windows ($w < 60$) would cause excessive cluster reassignments from weekly noise; long windows ($w > 504$) would reintroduce the global-scaler bias |
+
+### 3.4 Practical Effect on Regime Detection
+
+The normalized design matrix $\mathbf{Z} \in \mathbb{R}^{N' \times d}$ (where $N' = N - \lfloor w/4 \rfloor$ after the minimum-period drop) feeds directly into PCA and K-Means. Because $\mathbf{Z}$ now encodes **relative deviations from recent norms** rather than absolute deviations from all-time history, the resulting clusters represent:
+
+- **High-Volatility Bearish:** Contemporaneously anomalous downward pressure — not just high volatility relative to 2021
+- **Low-Volatility Neutral:** Genuinely calm relative to the past year
+- **Moderate-Volatility Bullish:** Meaningfully above-average upward momentum relative to recent conditions
+- **High-Volatility Transition:** Contemporaneous regime uncertainty — unstable momentum AND elevated variance relative to the 252-day baseline
+
+This invariance property ensures that the regime label is **independent of the user's chosen visual lookback window**, resolving the core inconsistency identified in the system design.
 
 ---
 

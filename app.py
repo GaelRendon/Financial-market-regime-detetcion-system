@@ -190,9 +190,10 @@ selected_period = horizon_options[selected_horizon_label]
 st.sidebar.markdown("---")
 st.sidebar.markdown("### ℹ️ About the Model")
 st.sidebar.caption(
-    "This system applies **StandardScaler + PCA (95% variance)** to reduce Returns, 30d Volatility, "
-    "and 14d Momentum into orthogonal components, partitions states with **K-Means (K=4)**, "
-    "models transition persistence with **Markov Chains**, and forecasts the next regime with **Random Forest**."
+    "This system applies **Rolling Z-Score Normalization (252-day window)** to contextualize "
+    "Returns, 30d Volatility, and 14d Momentum relative to recent market conditions — not all-time history. "
+    "**PCA (95% variance)** then reduces these into orthogonal components, **K-Means (K=4)** partitions "
+    "market states, **Markov Chains** model regime persistence, and **Random Forest** forecasts the next regime."
 )
 
 run_button = st.sidebar.button("🚀 Run Live Analysis", type="primary", use_container_width=True)

@@ -113,6 +113,8 @@ A common method is standardization:
 **Why this matters to us:**  
 Both PCA (indirectly) and K-Means depend on distance-based relationships. If features are not scaled properly, the model may detect patterns based only on magnitude rather than meaningful structure.
 
+In this project we apply **rolling z-score normalization** using a 252-day sliding window rather than a single global scaler. See **Section 27** for a full explanation of why this is critical for consistent regime detection.
+
 ---
 
 ## 7. What Principal Component Analysis (PCA) Does
@@ -503,4 +505,63 @@ By computing percentiles across all 1,000 paths, the model provides:
 Providing a day-by-day table and confidence corridors empowers users to visualize both the upside potential and downside exposure of their money, fostering disciplined risk management.
 
 
+---
+
+## 27. Rolling Z-Score Normalization — Why "High Volatility" Must Be Measured Relative to Recent History
+
+### The Problem with Global Standardization
+
+Earlier versions of this system normalized features using a global `StandardScaler` fitted on the entire historical window selected by the user. This created a subtle but important modeling flaw:
+
+When the user selects **"Maximum Available"** data (e.g., 7+ years for BTC), the global standard deviation is dominated by the extreme boom-and-bust cycles of **2017–2018** and **2021–2022** — when Bitcoin fell more than 80% in a matter of months. These events set an extremely high bar for what the model considers "high volatility."
+
+As a result, today's market — which may be genuinely elevated in volatility relative to recent months — appears **calm** when measured against that all-time historical scale. The model therefore outputs **Low-Volatility Neutral** even when current conditions are actually turbulent.
+
+Conversely, when the user selects **"1 Year"**, the model only sees recent data. The reference frame shifts — today's volatility is compared against only the past 12 months — and the model correctly identifies a **High-Volatility** state.
+
+This is not a bug in the data. It is a fundamental problem in how features are normalized.
+
+---
+
+### The Solution: Rolling Z-Score Normalization
+
+Instead of standardizing each feature relative to the entire dataset, the system now applies a **rolling z-score** using a sliding window of **252 trading days** (≈ 1 calendar year — the standard reference period in quantitative finance):
+
+$$z_j(t) = \frac{x_j(t) - \bar{x}_j[t-w,\, t]}{s_j[t-w,\, t]}$$
+
+Where:
+- $x_j(t)$ is the raw feature value (Returns, Volatility, or Momentum) on day $t$
+- $\bar{x}_j[t-w,\, t]$ is the rolling mean of feature $j$ over the past $w = 252$ days
+- $s_j[t-w,\, t]$ is the rolling standard deviation of feature $j$ over the same window
+- $z_j(t)$ is the normalized value fed into PCA and K-Means
+
+This means:
+- A volatility reading of **1.5%** on a day when the past-year average was **0.8%** will produce a **high positive z-score** → correctly detected as high volatility
+- The same **1.5%** reading in a window that included 2021's 5%+ volatility spikes would produce a **near-zero z-score** → incorrectly classified as neutral
+
+---
+
+### Why 252 Days?
+
+252 trading days corresponds to approximately one calendar year of market activity. It is the universal convention in quantitative finance for:
+- Annualizing volatility (σ_annual = σ_daily × √252)
+- Defining a medium-term "economic memory"
+- Calculating Sharpe ratios and risk-adjusted returns
+
+Using a 1-year rolling window ensures the model's normalization is:
+- **Recent enough** to reflect the current market environment
+- **Long enough** to be statistically stable (not distorted by a single bad week)
+
+---
+
+### What This Fixes in Practice
+
+| Scenario | Old behavior (Global Scaler) | New behavior (Rolling Z-Score) |
+|---|---|---|
+| BTC with 7-year history selected | Today's volatility looks tiny vs. 2021 → Neutral | Compared to past 252 days → correctly detects regime |
+| BTC with 1-year history selected | Correctly detected High-Volatility Bearish | Same result — consistent |
+| Any asset, any lookback window | Regime changes with the window selected | Regime is stable and consistent across all windows |
+
+**Why this matters to us:**
+Rolling z-score normalization eliminates the artificial dependency between the user's visual lookback choice and the model's regime output. The forecast suggestion now reflects the actual current market environment — not an artifact of how much history the user decided to explore.
 

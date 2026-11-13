@@ -17,6 +17,7 @@ Rather than predicting future asset prices directly, the project seeks to discov
 - End-to-end financial data science pipeline.
 - Automated feature engineering for financial time series.
 - Configurable multi-asset architecture.
+- **Rolling Z-Score Normalization (252-day window)** — regime detection relative to recent market conditions, not all-time history.
 - PCA-based dimensionality reduction.
 - K-Means market regime detection.
 - Financial interpretation of identified regimes.

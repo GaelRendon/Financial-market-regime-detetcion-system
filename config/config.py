@@ -55,6 +55,18 @@ VOLATILITY_WINDOW = 30
 MOMENTUM_WINDOW = 14
 
 # ==========================================
+# ROLLING NORMALIZATION CONFIGURATION
+# ==========================================
+# Window used for rolling z-score normalization before PCA and K-Means.
+# Instead of standardizing features relative to ALL historical data
+# (which makes today look calm when compared to 2017-2021 extreme cycles),
+# we normalize each feature relative to only the past ROLLING_NORM_WINDOW
+# trading days. This makes "high volatility" always mean "high compared to
+# recent market conditions" — a more financially meaningful reference frame.
+# 252 trading days ≈ 1 calendar year (the standard quant finance convention).
+ROLLING_NORM_WINDOW = 252
+
+# ==========================================
 # PCA CONFIGURATION
 # ==========================================
 
