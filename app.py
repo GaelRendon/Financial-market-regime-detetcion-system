@@ -19,8 +19,10 @@ if CURRENT_DIR not in sys.path:
 import importlib
 import src.inference
 import src.utils.translations
+import src.utils.assets
 importlib.reload(src.inference)
 importlib.reload(src.utils.translations)
+importlib.reload(src.utils.assets)
 
 from src.inference import RegimeInferenceEngine
 from src.utils.translations import (
@@ -30,6 +32,11 @@ from src.utils.translations import (
     translate_risk_level,
     translate_rationale,
     SUPPORTED_LANGUAGES
+)
+from src.utils.assets import (
+    get_search_options,
+    extract_symbol_from_choice,
+    get_directory_dataframe
 )
 
 # Page configuration
@@ -168,50 +175,31 @@ lang = st.session_state["app_language"]
 st.sidebar.title(t("sidebar_title", lang=lang))
 st.sidebar.markdown(t("sidebar_subtitle", lang=lang))
 
-asset_class_options = [
-    t("asset_class_crypto", lang=lang),
-    t("asset_class_stocks", lang=lang),
-    t("asset_class_commodities", lang=lang),
-    t("asset_class_indices", lang=lang),
-    t("asset_class_custom", lang=lang)
-]
-
-asset_class_choice = st.sidebar.selectbox(
-    t("asset_class_label", lang=lang),
-    asset_class_options,
-    index=0
+# Intelligent Typeahead Search Selector (Phase 2)
+search_options = get_search_options(lang=lang)
+selected_search_choice = st.sidebar.selectbox(
+    t("search_asset_label", lang=lang),
+    search_options,
+    index=0,
+    help=t("search_asset_help", lang=lang)
 )
 
-# Identify selected asset class based on index
-chosen_index = asset_class_options.index(asset_class_choice)
-
-if chosen_index == 0:
-    popular_crypto = ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE", "AVAX", "LINK"]
-    coin_ticker = st.sidebar.selectbox(t("select_crypto", lang=lang), popular_crypto, index=0)
-elif chosen_index == 1:
-    popular_stocks = ["NVDA (NVIDIA)", "AAPL (Apple)", "GOOGL (Alphabet / Google)", "MSFT (Microsoft)", "AMZN (Amazon)", "TSLA (Tesla)", "META (Meta)"]
-    stock_choice = st.sidebar.selectbox(t("select_stock", lang=lang), popular_stocks, index=0)
-    coin_ticker = stock_choice.split()[0]
-elif chosen_index == 2:
-    popular_commodities = [
-        "Gold Futures (GC=F)",
-        "SPDR Gold Shares (GLD)",
-        "Silver Futures (SI=F)",
-        "Crude Oil Futures (CL=F)",
-        "Copper Futures (HG=F)"
-    ]
-    comm_choice = st.sidebar.selectbox(t("select_commodity", lang=lang), popular_commodities, index=0)
-    coin_ticker = comm_choice.split("(")[1].replace(")", "").strip()
-elif chosen_index == 3:
-    popular_indices = [
-        "S&P 500 (^GSPC)",
-        "Nasdaq 100 (^NDX)",
-        "Dow Jones Industrial (^DJI)"
-    ]
-    idx_choice = st.sidebar.selectbox(t("select_index", lang=lang), popular_indices, index=0)
-    coin_ticker = idx_choice.split("(")[1].replace(")", "").strip()
+extracted_sym = extract_symbol_from_choice(selected_search_choice)
+if extracted_sym is None:
+    # Custom Ticker mode
+    coin_ticker = st.sidebar.text_input(
+        t("custom_ticker_prompt", lang=lang),
+        value=st.session_state.get("custom_ticker_val", "NVDA")
+    ).upper().strip()
+    st.session_state["custom_ticker_val"] = coin_ticker
 else:
-    coin_ticker = st.sidebar.text_input(t("custom_ticker_label", lang=lang), "NVDA").upper().strip()
+    coin_ticker = extracted_sym
+
+# Collapsible Directory & Cheat Sheet (Phase 2)
+with st.sidebar.expander(t("directory_expander_title", lang=lang), expanded=False):
+    st.caption(t("directory_caption", lang=lang))
+    dir_df = get_directory_dataframe(lang=lang)
+    st.dataframe(dir_df, use_container_width=True, hide_index=True)
 
 selected_fiat = st.sidebar.selectbox(t("fiat_currency_label", lang=lang), ["USD", "MXN", "EUR", "GBP", "CAD"], index=0)
 fiat_symbol = CURRENCY_SYMBOLS.get(selected_fiat, "$")
@@ -276,7 +264,8 @@ if (
             st.session_state["last_ticker"] = full_ticker
             st.session_state["last_period"] = selected_period
         except Exception as e:
-            st.error(f"Error analyzing {full_ticker}: {str(e)}")
+            st.error(t("ticker_error_friendly", lang=lang, ticker=full_ticker))
+            st.caption(f"Technical detail: {str(e)}")
             st.stop()
 
 results = st.session_state.get("inference_results")

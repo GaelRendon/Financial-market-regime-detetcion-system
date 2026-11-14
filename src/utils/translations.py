@@ -27,9 +27,32 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "en": "Configure target financial asset and denomination fiat:",
         "es": "Configura el activo financiero y la divisa fiat de denominación:"
     },
-    "asset_class_label": {
-        "en": "Asset Class",
-        "es": "Clase de Activo"
+    # ==========================================
+    # SIDEBAR: ASSET DISCOVERY & SEARCH
+    # ==========================================
+    "search_asset_label": {
+        "en": "🔎 Search Asset (Name or Ticker)",
+        "es": "🔎 Buscar Activo (Nombre o Ticker)"
+    },
+    "search_asset_help": {
+        "en": "Type any name (e.g., 'Gold', 'Nvidia', 'Bitcoin', 'Nasdaq') or symbol ('AAPL', 'GC=F', 'BTC').",
+        "es": "Escribe cualquier nombre (ej. 'Oro', 'Nvidia', 'Bitcoin', 'Nasdaq') o símbolo ('AAPL', 'GC=F', 'BTC')."
+    },
+    "custom_ticker_prompt": {
+        "en": "Enter Custom Yahoo Finance Ticker (e.g., PLTR, BABA, DIS):",
+        "es": "Ingresa el Ticker de Yahoo Finance (ej. PLTR, BABA, DIS):"
+    },
+    "directory_expander_title": {
+        "en": "📚 Supported Assets Cheat Sheet & Directory",
+        "es": "📚 Directorio de Activos y Guía de Tickers"
+    },
+    "directory_caption": {
+        "en": "Browse 40+ curated institutional assets across Crypto, Equities, Commodities, and Benchmark Indices. You can search them directly by typing in the search bar above.",
+        "es": "Explora más de 40 activos institucionales en Criptomonedas, Acciones, Materias Primas e Índices. Puedes buscarlos directamente escribiendo en la barra superior."
+    },
+    "ticker_error_friendly": {
+        "en": "⚠️ Could not fetch market data for '{ticker}' from Yahoo Finance. Please verify that the symbol is valid (e.g., AAPL for Apple, GC=F for Gold, BTC for Bitcoin) or choose an asset from the directory above.",
+        "es": "⚠️ No se pudieron obtener datos de mercado para '{ticker}' en Yahoo Finance. Por favor verifica que el símbolo sea válido (ej. AAPL para Apple, GC=F para Oro, BTC para Bitcoin) o elige un activo del directorio arriba."
     },
     "asset_class_crypto": {
         "en": "🪙 Cryptocurrencies",
