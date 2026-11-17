@@ -358,10 +358,14 @@ class RegimeInferenceEngine:
         prev_close = float(clean_data["Close"].iloc[-2])
         change_24h = ((latest_close - prev_close) / prev_close) * 100.0
 
+        # Trading Calendar: Detect whether this asset trades 24/7 (Crypto) or business days (Stocks/Commodities/Indices)
+        is_24_7 = bool(clean_data.index.dayofweek.isin([5, 6]).any())
+
         return {
             "ticker": ticker,
             "coin": coin,
             "fiat": fiat,
+            "is_24_7": is_24_7,
             "latest_date": str(clean_data.index[-1].date()),
             "latest_close": latest_close,
             "change_24h_pct": change_24h,
@@ -393,6 +397,14 @@ class RegimeInferenceEngine:
         forecast_probs = analysis_result["forecast_probabilities"]
         latest_date_str = analysis_result["latest_date"]
         start_date = pd.to_datetime(latest_date_str)
+        is_24_7 = analysis_result.get("is_24_7", True)
+
+        # Forward Horizon Dates: 24/7 calendar days (Crypto) vs Mon-Fri business days (Stocks, Commodities, Indices)
+        if is_24_7:
+            sim_dates = [(start_date + pd.Timedelta(days=i)).strftime("%Y-%m-%d") for i in range(horizon_days + 1)]
+        else:
+            b_dates = pd.bdate_range(start=start_date, periods=horizon_days + 1)
+            sim_dates = [d.strftime("%Y-%m-%d") for d in b_dates]
 
         # 1. Historical empirical return distribution per regime
         regime_stats = {}
@@ -466,7 +478,7 @@ class RegimeInferenceEngine:
         breakdown = []
         for d in range(horizon_days):
             day_num = d + 1
-            day_date = (start_date + pd.Timedelta(days=day_num)).strftime("%Y-%m-%d")
+            day_date = sim_dates[day_num]
             p_vector = daily_probs[d]
             best_idx = int(np.argmax(p_vector))
             best_regime = regimes[best_idx]
@@ -503,7 +515,8 @@ class RegimeInferenceEngine:
             "lower_bound_10th": round(float(pct_10[-1]), 2),
             "upper_bound_90th": round(float(pct_90[-1]), 2),
             "breakdown_df": breakdown_df,
-            "dates": [(start_date + pd.Timedelta(days=i)).strftime("%Y-%m-%d") for i in range(horizon_days + 1)],
+            "dates": sim_dates,
+            "is_24_7": is_24_7,
             "corridors": {
                 "mean": pct_mean.tolist(),
                 "p10": pct_10.tolist(),

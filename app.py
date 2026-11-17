@@ -150,8 +150,8 @@ CURRENCY_SYMBOLS = {
     "CAD": "$"
 }
 
-def format_crypto_price(value: float, symbol: str = "$") -> str:
-    """Format asset price with adaptive precision so sub-dollar and micro-cap coins don't display $0.00."""
+def format_asset_price(value: float, symbol: str = "$") -> str:
+    """Format asset price with adaptive precision so sub-dollar and micro-cap assets don't display $0.00."""
     abs_val = abs(value)
     if abs_val >= 1.0:
         return f"{symbol}{value:,.2f}"
@@ -163,6 +163,8 @@ def format_crypto_price(value: float, symbol: str = "$") -> str:
         return f"{symbol}{value:,.8f}"
     else:
         return f"{symbol}0.00"
+
+format_crypto_price = format_asset_price  # Backward-compatible alias
 
 # Initialize Language in session state
 if "app_language" not in st.session_state:
@@ -286,7 +288,7 @@ if results:
         with m1:
             st.metric(
                 label=t("metric_current_price", lang=lang, fiat=selected_fiat),
-                value=format_crypto_price(results['latest_close'], fiat_symbol),
+                value=format_asset_price(results['latest_close'], fiat_symbol),
                 delta=f"{results['change_24h_pct']:+.2f}% (24h)",
                 help=t("metric_current_price_help", lang=lang, fiat=selected_fiat)
             )
@@ -297,9 +299,11 @@ if results:
                 help=t("metric_current_regime_help", lang=lang, regime=translated_curr_regime)
             )
         with m3:
+            is_24_7_asset = results.get("is_24_7", True)
+            persistence_suffix = t("days_suffix_calendar" if is_24_7_asset else "days_suffix_trading", lang=lang)
             st.metric(
                 label=t("metric_persistence", lang=lang),
-                value=f"{results['regime_streak_days']} {t('days_suffix', lang=lang)}",
+                value=f"{results['regime_streak_days']} {persistence_suffix}",
                 help=t("metric_persistence_help", lang=lang)
             )
         with m4:
@@ -691,6 +695,9 @@ if results:
 
             # 3. Day-by-Day Forecast Breakdown Table
             st.markdown(t("sim_table_title", lang=lang))
+            is_24_7_asset = sim.get("is_24_7", results.get("is_24_7", True))
+            schedule_note = t("sim_table_crypto_note" if is_24_7_asset else "sim_table_trading_note", lang=lang)
+            st.markdown(f"<div style='font-size: 0.88rem; color: #64748B; margin-bottom: 8px;'>{schedule_note}</div>", unsafe_allow_html=True)
             b_df = sim["breakdown_df"].copy()
             
             b_display = b_df.copy()

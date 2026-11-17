@@ -206,6 +206,14 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "en": "days",
         "es": "días"
     },
+    "days_suffix_calendar": {
+        "en": "calendar days",
+        "es": "días naturales"
+    },
+    "days_suffix_trading": {
+        "en": "trading days (Mon-Fri)",
+        "es": "días de mercado (Lun-Vie)"
+    },
     "metric_volatility": {
         "en": "30-Day Volatility",
         "es": "Volatilidad a 30 Días"
@@ -441,6 +449,14 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "sim_table_title": {
         "en": "#### 📅 Day-by-Day Forecast Summary Table",
         "es": "#### 📅 Tabla Resumen del Pronóstico Día por Día"
+    },
+    "sim_table_trading_note": {
+        "en": "ℹ️ <b>Market Schedule:</b> Forecast dates reflect active trading sessions (Monday–Friday) excluding weekend market closures.",
+        "es": "ℹ️ <b>Horario de Mercado:</b> Las fechas proyectadas corresponden a sesiones bursátiles activas (Lunes a Viernes), omitiendo fines de semana."
+    },
+    "sim_table_crypto_note": {
+        "en": "ℹ️ <b>Market Schedule:</b> 24/7/365 continuous trading across all calendar days.",
+        "es": "ℹ️ <b>Horario de Mercado:</b> Negociación continua 24/7/365 durante todos los días naturales."
     },
     "sim_download_button": {
         "en": "💾 Download 7-Day Projection Report ({fiat})",
