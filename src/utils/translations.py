@@ -31,12 +31,20 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     # SIDEBAR: ASSET DISCOVERY & SEARCH
     # ==========================================
     "search_asset_label": {
-        "en": "🔎 Search Asset (Name or Ticker)",
-        "es": "🔎 Buscar Activo (Nombre o Ticker)"
+        "en": "🔎 Search Asset (Name or Symbol)",
+        "es": "🔎 Buscar Activo (Nombre o Símbolo)"
+    },
+    "search_asset_placeholder": {
+        "en": "e.g. Bitcoin, Microsoft, Gold, NVDA...",
+        "es": "ej. Bitcoin, Microsoft, Oro, NVDA..."
     },
     "search_asset_help": {
         "en": "Type any name (e.g., 'Gold', 'Nvidia', 'Bitcoin', 'Nasdaq') or symbol ('AAPL', 'GC=F', 'BTC').",
         "es": "Escribe cualquier nombre (ej. 'Oro', 'Nvidia', 'Bitcoin', 'Nasdaq') o símbolo ('AAPL', 'GC=F', 'BTC')."
+    },
+    "autocomplete_suggestions_label": {
+        "en": "💡 Matching Suggestions:",
+        "es": "💡 Sugerencias Coincidentes:"
     },
     "custom_ticker_prompt": {
         "en": "Enter Custom Yahoo Finance Ticker (e.g., PLTR, BABA, DIS):",

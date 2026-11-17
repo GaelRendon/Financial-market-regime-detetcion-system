@@ -1,10 +1,13 @@
 """
-Curated Multi-Asset Catalog and Discovery Directory for the
+Curated Multi-Asset Catalog and Intelligent Autocomplete Engine for the
 Financial Market Regime Detection System.
-Provides structured metadata, typeahead search formatting, and cheat-sheet dataframes
-across Cryptocurrencies, Global Equities, Commodities, and Major Market Indices.
+Provides fuzzy keyword matching against curated benchmarks as well as real-time
+Yahoo Finance search autocomplete for all 150,000+ global financial assets.
 """
 
+import urllib.request
+import urllib.parse
+import json
 from typing import List, Dict, Any, Optional
 import pandas as pd
 
@@ -75,43 +78,122 @@ ASSET_CATALOG: List[Dict[str, str]] = [
     {"symbol": "TLT", "name_en": "iShares 20+ Year Treasury Bond ETF", "name_es": "ETF Bonos del Tesoro 20+ Años", "category_en": "Indices & ETFs", "category_es": "Índices y ETFs", "badge": "🏛️"}
 ]
 
-CUSTOM_OPTION_EN = "🔍 Custom Ticker (Enter any Yahoo Finance symbol)..."
-CUSTOM_OPTION_ES = "🔍 Ticker Personalizado (Ingresa cualquier símbolo)..."
 
+def search_asset_suggestions(query: str, lang: str = "en", max_results: int = 6) -> List[Dict[str, str]]:
+    """
+    Autocomplete search engine:
+    1. Matches input against local 40+ asset catalog (names & symbols).
+    2. Queries live Yahoo Finance autocomplete API for international / unlisted tickers.
+    3. Guarantees safe fallback so offline or sandboxed execution never crashes.
+    """
+    q = query.strip().lower()
+    if not q:
+        q = "btc"
 
-def get_search_options(lang: str = "en") -> List[str]:
-    """
-    Return formatted search strings for typeahead selectbox.
-    Example: '🪙 BTC - Bitcoin (Cryptocurrency)'
-    """
-    options = []
     is_es = (lang == "es")
+    results = []
+    seen_symbols = set()
+
+    # 1. Local Catalog Match
     for item in ASSET_CATALOG:
-        name = item["name_es"] if is_es else item["name_en"]
+        sym = item["symbol"].upper()
+        name_en = item["name_en"].lower()
+        name_es = item["name_es"].lower()
         cat = item["category_es"] if is_es else item["category_en"]
         badge = item.get("badge", "📌")
-        options.append(f"{badge} {item['symbol']} — {name} ({cat})")
-    
-    # Add custom symbol entry at the end
-    options.append(CUSTOM_OPTION_ES if is_es else CUSTOM_OPTION_EN)
-    return options
+
+        score = 0
+        if sym.lower() == q:
+            score = 100
+        elif sym.lower().startswith(q):
+            score = 80
+        elif name_en.startswith(q) or name_es.startswith(q):
+            score = 75
+        elif q in sym.lower() or q in name_en or q in name_es:
+            score = 50
+
+        if score > 0:
+            name = item["name_es"] if is_es else item["name_en"]
+            results.append({
+                "symbol": sym,
+                "name": name,
+                "category": cat,
+                "badge": badge,
+                "display": f"{badge} {sym} — {name} ({cat})",
+                "score": score
+            })
+            seen_symbols.add(sym)
+
+    # Sort local results by relevance
+    results.sort(key=lambda x: x["score"], reverse=True)
+
+    # 2. Live Yahoo Finance Search API Fallback (for assets outside top catalog)
+    if len(q) >= 2 and len(results) < max_results:
+        try:
+            encoded_q = urllib.parse.quote(q)
+            url = f"https://query2.finance.yahoo.com/v1/finance/search?q={encoded_q}&quotesCount=6&newsCount=0"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=1.8) as resp:
+                data = json.loads(resp.read().decode())
+                for quote in data.get("quotes", []):
+                    raw_sym = quote.get("symbol", "").upper()
+                    if not raw_sym or raw_sym in seen_symbols:
+                        continue
+                    
+                    clean_sym = raw_sym.replace("-USD", "") if "-USD" in raw_sym and quote.get("quoteType") == "CRYPTOCURRENCY" else raw_sym
+                    if clean_sym in seen_symbols:
+                        continue
+
+                    shortname = quote.get("shortname") or quote.get("longname") or clean_sym
+                    q_type = quote.get("quoteType", "ASSET").title()
+                    badge = "🪙" if q_type == "Cryptocurrency" else "🏢" if q_type == "Equity" else "📊" if q_type in ("Etf", "Index") else "📌"
+                    
+                    cat_display = ("Criptomoneda" if q_type == "Cryptocurrency" else "Acciones" if q_type == "Equity" else "ETF / Índice" if q_type in ("Etf", "Index") else q_type) if is_es else q_type
+
+                    results.append({
+                        "symbol": clean_sym,
+                        "name": shortname,
+                        "category": cat_display,
+                        "badge": badge,
+                        "display": f"{badge} {clean_sym} — {shortname} ({cat_display})",
+                        "score": 40
+                    })
+                    seen_symbols.add(clean_sym)
+                    seen_symbols.add(raw_sym)
+                    if len(results) >= max_results:
+                        break
+        except Exception:
+            pass
+
+    # 3. Always provide option to use the exact typed symbol
+    raw_upper = query.strip().upper()
+    if raw_upper and raw_upper not in seen_symbols:
+        custom_label = f"🔍 {raw_upper} — Custom Ticker" if not is_es else f"🔍 {raw_upper} — Ticker Personalizado"
+        results.append({
+            "symbol": raw_upper,
+            "name": raw_upper,
+            "category": "Custom",
+            "badge": "🔍",
+            "display": custom_label,
+            "score": 0
+        })
+
+    return results[:max_results]
 
 
-def extract_symbol_from_choice(choice: str) -> Optional[str]:
+def extract_symbol_from_choice(choice: str) -> str:
     """
-    Extract pure symbol from the selectbox option string.
-    Returns None if the user selected custom entry.
+    Extract pure symbol from the autocomplete suggestion string.
+    Example: '🏢 MSFT — Microsoft Corporation (Global Equities)' -> 'MSFT'
     """
-    if choice in (CUSTOM_OPTION_EN, CUSTOM_OPTION_ES):
-        return None
+    if not choice:
+        return "BTC"
     try:
-        # Format is '{badge} {symbol} — {name} ({cat})'
         symbol_part = choice.split("—")[0].strip()
-        # Remove any leading emoji
         symbol = symbol_part.split()[-1].strip()
         return symbol
     except Exception:
-        return choice.strip()
+        return choice.strip().upper()
 
 
 def get_directory_dataframe(lang: str = "en") -> pd.DataFrame:

@@ -34,7 +34,7 @@ from src.utils.translations import (
     SUPPORTED_LANGUAGES
 )
 from src.utils.assets import (
-    get_search_options,
+    search_asset_suggestions,
     extract_symbol_from_choice,
     get_directory_dataframe
 )
@@ -175,25 +175,25 @@ lang = st.session_state["app_language"]
 st.sidebar.title(t("sidebar_title", lang=lang))
 st.sidebar.markdown(t("sidebar_subtitle", lang=lang))
 
-# Intelligent Typeahead Search Selector (Phase 2)
-search_options = get_search_options(lang=lang)
-selected_search_choice = st.sidebar.selectbox(
+# Google-Style Autocomplete Search Bar
+search_query = st.sidebar.text_input(
     t("search_asset_label", lang=lang),
-    search_options,
-    index=0,
+    value=st.session_state.get("current_search_query", "BTC"),
+    placeholder=t("search_asset_placeholder", lang=lang),
     help=t("search_asset_help", lang=lang)
 )
 
-extracted_sym = extract_symbol_from_choice(selected_search_choice)
-if extracted_sym is None:
-    # Custom Ticker mode
-    coin_ticker = st.sidebar.text_input(
-        t("custom_ticker_prompt", lang=lang),
-        value=st.session_state.get("custom_ticker_val", "NVDA")
-    ).upper().strip()
-    st.session_state["custom_ticker_val"] = coin_ticker
-else:
-    coin_ticker = extracted_sym
+# Dynamic Autocomplete Suggestions (Fuzzy catalog + Live Yahoo Finance)
+suggestions = search_asset_suggestions(search_query, lang=lang, max_results=6)
+suggestion_displays = [s["display"] for s in suggestions] if suggestions else ["🪙 BTC — Bitcoin (Cryptocurrency)"]
+
+selected_choice = st.sidebar.selectbox(
+    t("autocomplete_suggestions_label", lang=lang),
+    options=suggestion_displays,
+    index=0
+)
+
+coin_ticker = extract_symbol_from_choice(selected_choice)
 
 # Collapsible Directory & Cheat Sheet (Phase 2)
 with st.sidebar.expander(t("directory_expander_title", lang=lang), expanded=False):
