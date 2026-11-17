@@ -200,6 +200,7 @@ with st.sidebar.expander(t("directory_expander_title", lang=lang), expanded=Fals
     st.caption(t("directory_caption", lang=lang))
     dir_df = get_directory_dataframe(lang=lang)
     st.dataframe(dir_df, use_container_width=True, hide_index=True)
+    st.info(t("directory_note", lang=lang))
 
 selected_fiat = st.sidebar.selectbox(t("fiat_currency_label", lang=lang), ["USD", "MXN", "EUR", "GBP", "CAD"], index=0)
 fiat_symbol = CURRENCY_SYMBOLS.get(selected_fiat, "$")

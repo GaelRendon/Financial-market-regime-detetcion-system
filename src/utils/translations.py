@@ -47,8 +47,12 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "es": "📚 Directorio de Activos y Guía de Tickers"
     },
     "directory_caption": {
-        "en": "Browse 40+ curated institutional assets across Crypto, Equities, Commodities, and Benchmark Indices. You can search them directly by typing in the search bar above.",
-        "es": "Explora más de 40 activos institucionales en Criptomonedas, Acciones, Materias Primas e Índices. Puedes buscarlos directamente escribiendo en la barra superior."
+        "en": "Browse 40+ curated benchmark assets across Crypto, Equities, Commodities, and Benchmark Indices. You can search them directly by typing in the search bar above.",
+        "es": "Explora más de 40 activos institucionales de referencia en Criptomonedas, Acciones, Materias Primas e Índices. Puedes buscarlos directamente en la barra superior."
+    },
+    "directory_note": {
+        "en": "💡 **Looking for another asset?** Yahoo Finance tracks over 150,000+ global financial assets. Select **'🔍 Custom Ticker'** in the search bar above to analyze *any* stock, crypto, ETF, or commodity in the world (e.g., PLTR, COIN, DIS, MELI, ARM).",
+        "es": "💡 **¿Buscas otro activo?** Yahoo Finance rastrea más de 150,000 activos financieros en todo el mundo. Selecciona **'🔍 Ticker Personalizado'** en la barra superior para analizar *cualquier* acción, cripto, ETF o materia prima (ej., PLTR, COIN, DIS, MELI, ARM)."
     },
     "ticker_error_friendly": {
         "en": "⚠️ Could not fetch market data for '{ticker}' from Yahoo Finance. Please verify that the symbol is valid (e.g., AAPL for Apple, GC=F for Gold, BTC for Bitcoin) or choose an asset from the directory above.",
