@@ -195,8 +195,12 @@ class RegimeInferenceEngine:
     def analyze_ticker(self, ticker: str, period: str = "3y", force_refresh: bool = False) -> Dict[str, Any]:
         """
         Execute full inference pipeline for any ticker (Crypto, Stock, Commodity, Index, ETF).
-        Fetches full historical data to preserve feature calculation integrity and ensure
-        the latest price remains 100% consistent regardless of the chosen lookback window.
+
+        ARCHITECTURE: Model training is ALWAYS performed on the full available history
+        regardless of the user-selected lookback window. The lookback window ONLY controls
+        how many bars are shown in the historical chart (df_history). This guarantees that
+        the current regime detection, forecast, suggestion, and probabilities are completely
+        stable and unaffected by the user's display preference.
         """
         known_fiats = {"USD", "MXN", "EUR", "GBP", "CAD"}
         raw_ticker = ticker.strip().upper()
@@ -212,10 +216,10 @@ class RegimeInferenceEngine:
             coin = raw_ticker
             fiat = "USD"
 
-        # 1. Fetch full available data so features and latest prices are stable
+        # ── Step 1: Fetch full available history (always max, never sliced here) ──────
         raw_df = self.fetch_live_data(coin=coin, fiat=fiat, period="max", force_refresh=force_refresh)
 
-        # 2. Compute features over complete history to avoid edge rolling-window artifacts
+        # ── Step 2: Compute features over the complete history ────────────────────────
         features_df = pd.DataFrame(index=raw_df.index)
         features_df["Returns"] = raw_df["Close"].pct_change()
         features_df["Volatility"] = features_df["Returns"].rolling(self.volatility_window).std()
@@ -223,22 +227,10 @@ class RegimeInferenceEngine:
 
         full_clean = raw_df.join(features_df, how="inner").dropna()
 
-        # 3. Slice history to the requested lookback window while preserving the latest price
-        LOOKBACK_DAYS_MAP = {
-            "1y": 365,
-            "2y": 365 * 2,
-            "3y": 365 * 3,
-            "5y": 365 * 5,
-            "max": len(full_clean)
-        }
-        lookback_days = LOOKBACK_DAYS_MAP.get(period, len(full_clean))
-        clean_data = full_clean.tail(min(lookback_days, len(full_clean))).copy()
+        if len(full_clean) < 80:
+            raise ValueError(f"Not enough observations ({len(full_clean)}) to build models for {ticker}.")
 
-        if len(clean_data) < 80:
-            raise ValueError(f"Not enough observations ({len(clean_data)}) to build models for {ticker}.")
-
-        # 3. Rolling Z-Score Normalization (Option D)
-        # ─────────────────────────────────────────────────────────────────────
+        # ── Step 3: Rolling Z-Score Normalization on FULL history (Option D) ─────────
         # WHY rolling instead of global StandardScaler?
         #
         # Global StandardScaler fits mu and sigma on the ENTIRE training window.
@@ -257,45 +249,40 @@ class RegimeInferenceEngine:
         # year's norms" — a stable, recency-aware reference frame that produces
         # consistent regime reads regardless of which lookback window the user
         # selects in the UI.
-        # ─────────────────────────────────────────────────────────────────────
         feat_cols = ["Returns", "Volatility", "Momentum"]
         norm_window = ROLLING_NORM_WINDOW  # 252 days
 
-        roll_mean = clean_data[feat_cols].rolling(window=norm_window, min_periods=max(30, norm_window // 4)).mean()
-        roll_std  = clean_data[feat_cols].rolling(window=norm_window, min_periods=max(30, norm_window // 4)).std()
+        roll_mean = full_clean[feat_cols].rolling(window=norm_window, min_periods=max(30, norm_window // 4)).mean()
+        roll_std  = full_clean[feat_cols].rolling(window=norm_window, min_periods=max(30, norm_window // 4)).std()
+        roll_std  = roll_std.replace(0, np.nan).fillna(1e-8)
 
-        # Avoid division by zero: replace zero/NaN std with a small fallback
-        roll_std = roll_std.replace(0, np.nan).fillna(1e-8)
+        scaled_df = (full_clean[feat_cols] - roll_mean) / roll_std
 
-        # Element-wise z-score using the rolling statistics
-        scaled_df = (clean_data[feat_cols] - roll_mean) / roll_std
-
-        # Drop any rows where the rolling window didn't yet have enough data
-        clean_data = clean_data.loc[scaled_df.dropna().index].copy()
+        # Drop rows where the rolling window hadn't accumulated enough data yet
+        full_clean = full_clean.loc[scaled_df.dropna().index].copy()
         scaled_df  = scaled_df.dropna()
 
-        if len(clean_data) < 80:
+        if len(full_clean) < 80:
             raise ValueError(
-                f"Not enough observations after rolling normalization ({len(clean_data)}) "
-                f"for {ticker}. Try a longer lookback window."
+                f"Not enough observations after rolling normalization ({len(full_clean)}) for {ticker}."
             )
 
+        # ── Step 4: PCA + K-Means on FULL history ────────────────────────────────────
         scaled = scaled_df.values
 
         pca = PCA(n_components=min(3, len(feat_cols)))
         pca_proj = pca.fit_transform(scaled)
 
-        # 4. K-Means
         kmeans = KMeans(n_clusters=self.n_clusters, random_state=RANDOM_SEED, n_init=10)
         clusters = kmeans.fit_predict(pca_proj)
 
-        cluster_map = self._characterize_clusters(clean_data[feat_cols], clusters)
-        clean_data["Cluster"] = clusters
-        clean_data["Market_Regime"] = clean_data["Cluster"].map(cluster_map)
+        cluster_map = self._characterize_clusters(full_clean[feat_cols], clusters)
+        full_clean["Cluster"] = clusters
+        full_clean["Market_Regime"] = full_clean["Cluster"].map(cluster_map)
 
-        # 5. Markov Transition Matrix & Persistence
-        current_regime_series = clean_data["Market_Regime"]
-        next_regime_series = clean_data["Market_Regime"].shift(-1)
+        # ── Step 5: Markov Transition Matrix & Persistence on FULL history ───────────
+        current_regime_series = full_clean["Market_Regime"]
+        next_regime_series    = full_clean["Market_Regime"].shift(-1)
         trans_mat = pd.crosstab(current_regime_series, next_regime_series, normalize="index")
 
         persistence_stats = {}
@@ -307,8 +294,8 @@ class RegimeInferenceEngine:
                 "expected_duration_days": round(float(expected_days), 1)
             }
 
-        # 6. Forecasting Model Training & Next-Day Prediction
-        train_df = clean_data.copy()
+        # ── Step 6: Random Forest trains on FULL history ─────────────────────────────
+        train_df = full_clean.copy()
         train_df["Target"] = train_df["Market_Regime"].shift(-1)
         train_df = train_df.dropna(subset=["Target"]).copy()
 
@@ -320,7 +307,8 @@ class RegimeInferenceEngine:
         clf = RandomForestClassifier(n_estimators=100, random_state=RANDOM_SEED)
         clf.fit(train_df[x_cols], train_df["Target_Enc"])
 
-        latest_row = clean_data.iloc[-1]
+        # ── Step 7: Predict from latest row (always from full history tail) ──────────
+        latest_row = full_clean.iloc[-1]
         latest_regime_enc = le_regime.transform([latest_row["Market_Regime"]])[0]
         latest_x = pd.DataFrame([{
             "Returns": latest_row["Returns"],
@@ -330,7 +318,7 @@ class RegimeInferenceEngine:
         }])
 
         next_pred_enc = clf.predict(latest_x)[0]
-        next_probs = clf.predict_proba(latest_x)[0]
+        next_probs    = clf.predict_proba(latest_x)[0]
 
         next_regime_name = le_regime.inverse_transform([next_pred_enc])[0]
         prob_dict = {
@@ -346,27 +334,40 @@ class RegimeInferenceEngine:
             "rationale": "Maintain defensive alignment."
         })
 
+        # Streak always from full history tail
         streak = 1
-        regimes_rev = clean_data["Market_Regime"].values[::-1]
+        regimes_rev = full_clean["Market_Regime"].values[::-1]
         for i in range(1, len(regimes_rev)):
             if regimes_rev[i] == regimes_rev[0]:
                 streak += 1
             else:
                 break
 
-        latest_close = float(clean_data["Close"].iloc[-1])
-        prev_close = float(clean_data["Close"].iloc[-2])
-        change_24h = ((latest_close - prev_close) / prev_close) * 100.0
+        latest_close = float(full_clean["Close"].iloc[-1])
+        prev_close   = float(full_clean["Close"].iloc[-2])
+        change_24h   = ((latest_close - prev_close) / prev_close) * 100.0
 
-        # Trading Calendar: Detect whether this asset trades 24/7 (Crypto) or business days (Stocks/Commodities/Indices)
-        is_24_7 = bool(clean_data.index.dayofweek.isin([5, 6]).any())
+        is_24_7 = bool(full_clean.index.dayofweek.isin([5, 6]).any())
+
+        # ── Step 8: Slice history ONLY for chart display ──────────────────────────────
+        # The lookback window selected by the user controls ONLY what the historical
+        # chart shows. All ML outputs above are always computed from the full dataset.
+        LOOKBACK_DAYS_MAP = {
+            "1y": 365,
+            "2y": 365 * 2,
+            "3y": 365 * 3,
+            "5y": 365 * 5,
+            "max": len(full_clean)
+        }
+        lookback_days = LOOKBACK_DAYS_MAP.get(period, len(full_clean))
+        display_history = full_clean.tail(min(lookback_days, len(full_clean))).copy()
 
         return {
             "ticker": ticker,
             "coin": coin,
             "fiat": fiat,
             "is_24_7": is_24_7,
-            "latest_date": str(clean_data.index[-1].date()),
+            "latest_date": str(full_clean.index[-1].date()),
             "latest_close": latest_close,
             "change_24h_pct": change_24h,
             "current_regime": latest_row["Market_Regime"],
@@ -378,7 +379,7 @@ class RegimeInferenceEngine:
             "recommendation": policy,
             "transition_matrix": trans_mat,
             "persistence_stats": persistence_stats,
-            "df_history": clean_data
+            "df_history": display_history   # ← chart display only, never used for ML
         }
 
     def simulate_forward_trajectory(
