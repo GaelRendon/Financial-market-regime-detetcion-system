@@ -252,7 +252,7 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     },
 
     # ==========================================
-    # HISTORICAL TIMELINE
+    # HISTORICAL TIMELINE & CANDLESTICK
     # ==========================================
     "timeline_section_title": {
         "en": "### 📊 Historical Market Regime Timeline",
@@ -261,6 +261,46 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "timeline_chart_title": {
         "en": "{ticker} Daily Price History with Detected Regimes",
         "es": "Historial de Precios Diarios de {ticker} con Regímenes Detectados"
+    },
+    "chart_candle_title": {
+        "en": "{ticker} Candlestick Price Action (OHLC) with Detected Regimes",
+        "es": "Acción del Precio en Velas Japonesas de {ticker} (OHLC) con Regímenes Detectados"
+    },
+    "chart_candle_trace": {
+        "en": "OHLC Candlesticks",
+        "es": "Velas Japonesas OHLC"
+    },
+    "chart_view_label": {
+        "en": "Chart View Style:",
+        "es": "Estilo de Vista del Gráfico:"
+    },
+    "chart_view_line": {
+        "en": "📈 Regime Line",
+        "es": "📈 Línea con Regímenes"
+    },
+    "chart_view_candle": {
+        "en": "🕯️ Candlestick (OHLC)",
+        "es": "🕯️ Velas Japonesas (OHLC)"
+    },
+    "chart_custom_dates_expander": {
+        "en": "📅 Custom Date Range Filter (Optional)",
+        "es": "📅 Filtro de Rango de Fechas Personalizado (Opcional)"
+    },
+    "chart_filter_enable": {
+        "en": "Enable custom calendar date filter",
+        "es": "Habilitar filtro de fechas calendario personalizado"
+    },
+    "chart_start_date": {
+        "en": "Start Date",
+        "es": "Fecha de Inicio"
+    },
+    "chart_end_date": {
+        "en": "End Date",
+        "es": "Fecha de Fin"
+    },
+    "chart_quick_range_help": {
+        "en": "💡 Tip: You can also use the [7D], [1M], [3M], [1Y], [ALL] buttons directly above the chart or drag the mini-map slider below to zoom into any window.",
+        "es": "💡 Consejo: También puedes usar los botones [7D], [1M], [3M], [1Y], [TODO] arriba del gráfico o arrastrar el deslizador inferior para hacer zoom en cualquier período."
     },
     "timeline_chart_date": {
         "en": "Date",

@@ -387,9 +387,38 @@ if results:
             )
             st.plotly_chart(fig_prob, use_container_width=True)
 
-        # 3. Interactive Historical Regime Chart
+        # 3. Interactive Historical Regime & Candlestick Chart
         st.markdown(t("timeline_section_title", lang=lang))
         hist_df = results["df_history"]
+
+        col_view, col_exp = st.columns([1.6, 1.2])
+        with col_view:
+            chart_view = st.segmented_control(
+                t("chart_view_label", lang=lang),
+                options=["line", "candle"],
+                format_func=lambda opt: t("chart_view_line", lang=lang) if opt == "line" else t("chart_view_candle", lang=lang),
+                default="line",
+                label_visibility="collapsed"
+            ) or "line"
+
+        with col_exp:
+            with st.popover(t("chart_custom_dates_expander", lang=lang), use_container_width=True):
+                st.caption(t("chart_quick_range_help", lang=lang))
+                min_avail_date = hist_df.index[0].date()
+                max_avail_date = hist_df.index[-1].date()
+                enable_custom_range = st.checkbox(t("chart_filter_enable", lang=lang), value=False)
+                c_start, c_end = st.columns(2)
+                with c_start:
+                    custom_start = st.date_input(t("chart_start_date", lang=lang), value=min_avail_date, min_value=min_avail_date, max_value=max_avail_date, disabled=not enable_custom_range)
+                with c_end:
+                    custom_end = st.date_input(t("chart_end_date", lang=lang), value=max_avail_date, min_value=min_avail_date, max_value=max_avail_date, disabled=not enable_custom_range)
+
+        # Apply date slice if custom date range is enabled
+        plot_df = hist_df
+        if enable_custom_range and custom_start and custom_end and custom_start <= custom_end:
+            plot_df = hist_df.loc[pd.to_datetime(custom_start):pd.to_datetime(custom_end)]
+            if plot_df.empty:
+                plot_df = hist_df
 
         fig_price = go.Figure()
 
@@ -400,34 +429,93 @@ if results:
             "High-Volatility Bearish": "#EF4444"
         }
 
-        for r_name, r_color in regime_colors.items():
-            mask = hist_df["Market_Regime"] == r_name
-            if mask.any():
-                fig_price.add_trace(go.Scatter(
-                    x=hist_df.index[mask],
-                    y=hist_df["Close"][mask],
-                    mode="markers",
-                    name=translate_regime(r_name, lang=lang),
-                    marker=dict(size=4, color=r_color)
-                ))
+        if chart_view == "candle" and {"Open", "High", "Low", "Close"}.issubset(plot_df.columns):
+            # Pure OHLC candlestick — no regime markers, clean green/red candles only
+            fig_price.add_trace(go.Candlestick(
+                x=plot_df.index,
+                open=plot_df["Open"],
+                high=plot_df["High"],
+                low=plot_df["Low"],
+                close=plot_df["Close"],
+                name=t("chart_candle_trace", lang=lang),
+                increasing_line_color="#10B981",
+                increasing_fillcolor="#10B981",
+                decreasing_line_color="#EF4444",
+                decreasing_fillcolor="#EF4444"
+            ))
+            chart_title = t("chart_candle_title", lang=lang, ticker=full_ticker)
+        else:
+            # Classic Line Trace
+            for r_name, r_color in regime_colors.items():
+                mask = plot_df["Market_Regime"] == r_name
+                if mask.any():
+                    fig_price.add_trace(go.Scatter(
+                        x=plot_df.index[mask],
+                        y=plot_df["Close"][mask],
+                        mode="markers",
+                        name=translate_regime(r_name, lang=lang),
+                        marker=dict(size=4, color=r_color)
+                    ))
 
-        fig_price.add_trace(go.Scatter(
-            x=hist_df.index,
-            y=hist_df["Close"],
-            mode="lines",
-            name=t("timeline_close_price", lang=lang),
-            line=dict(color="#94A3B8", width=1),
-            opacity=0.7
-        ))
+            fig_price.add_trace(go.Scatter(
+                x=plot_df.index,
+                y=plot_df["Close"],
+                mode="lines",
+                name=t("timeline_close_price", lang=lang),
+                line=dict(color="#94A3B8", width=1),
+                opacity=0.7
+            ))
+            chart_title = t("timeline_chart_title", lang=lang, ticker=full_ticker)
+
+        range_buttons = [
+            dict(count=7, label="7D", step="day", stepmode="backward"),
+            dict(count=1, label="1M", step="month", stepmode="backward"),
+            dict(count=3, label="3M", step="month", stepmode="backward"),
+            dict(count=1, label="1Y", step="year", stepmode="backward"),
+            dict(step="all", label="ALL" if lang == "en" else "TODO")
+        ]
+
+        xaxis_kwargs = dict(
+            title=t("timeline_chart_date", lang=lang),
+            rangeselector=dict(
+                buttons=range_buttons,
+                bgcolor="#F8FAFC",
+                activecolor="#3B82F6",
+                font=dict(size=11, color="#1E293B")
+            ),
+            rangeslider=dict(visible=True, thickness=0.08),
+            type="date"
+        )
+
+        if not results.get("is_24_7", True):
+            xaxis_kwargs["rangebreaks"] = [dict(bounds=["sat", "mon"])]
+
+        fig_price.update_xaxes(**xaxis_kwargs)
 
         fig_price.update_layout(
-            title=t("timeline_chart_title", lang=lang, ticker=full_ticker),
-            xaxis_title=t("timeline_chart_date", lang=lang),
+            title=dict(
+                text=chart_title,
+                x=0,
+                xanchor="left",
+                y=1.0,
+                yanchor="top",
+                font=dict(size=14)
+            ),
             yaxis_title=t("timeline_chart_price", lang=lang, fiat=selected_fiat),
             hovermode="x unified",
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            height=450,
-            margin=dict(l=10, r=10, t=40, b=10)
+            legend=dict(
+                orientation="h",
+                yanchor="top",
+                y=0.99,
+                xanchor="right",
+                x=0.99,
+                bgcolor="rgba(255,255,255,0.75)",
+                bordercolor="#E2E8F0",
+                borderwidth=1,
+                font=dict(size=11)
+            ),
+            height=500,
+            margin=dict(l=10, r=10, t=50, b=10)
         )
         st.plotly_chart(fig_price, use_container_width=True)
 
