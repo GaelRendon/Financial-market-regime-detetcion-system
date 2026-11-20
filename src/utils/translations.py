@@ -513,7 +513,99 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "col_lower_10": {"en": "Lower Bound (10th)", "es": "Límite Inferior (10%)"},
     "col_upper_90": {"en": "Upper Bound (90th)", "es": "Límite Superior (90%)"},
     "col_cum_pnl": {"en": "Cumulative P&L", "es": "Ganancia Acumulada"},
-    "col_cum_ret": {"en": "Cumulative Return (%)", "es": "Retorno Acumulado (%)"}
+    "col_cum_ret": {"en": "Cumulative Return (%)", "es": "Retorno Acumulado (%)"},
+
+    # ==========================================
+    # TAB 3: PORTFOLIO OVERVIEW
+    # ==========================================
+    "portfolio_tab_label": {
+        "en": "🗂️ Portfolio Overview",
+        "es": "🗂️ Resumen de Portafolio"
+    },
+    "portfolio_title": {
+        "en": "### 🗂️ Multi-Asset Portfolio Overview",
+        "es": "### 🗂️ Resumen Multi-Activo del Portafolio"
+    },
+    "portfolio_description": {
+        "en": "Analyze up to **5 assets simultaneously** and compare their current market regimes, forecasts, and risk signals side by side.",
+        "es": "Analiza hasta **5 activos simultáneamente** y compara sus regímenes de mercado actuales, pronósticos y señales de riesgo de manera conjunta."
+    },
+    "portfolio_select_label": {
+        "en": "Select assets to include in your portfolio:",
+        "es": "Selecciona los activos a incluir en tu portafolio:"
+    },
+    "portfolio_select_help": {
+        "en": "Type a ticker or choose from the list. Supports any Yahoo Finance asset (stocks, crypto, ETFs, commodities).",
+        "es": "Escribe un ticker o elige de la lista. Compatible con cualquier activo de Yahoo Finance (acciones, cripto, ETFs, materias primas)."
+    },
+    "portfolio_run_button": {
+        "en": "🚀 Analyze Portfolio",
+        "es": "🚀 Analizar Portafolio"
+    },
+    "portfolio_analyzing": {
+        "en": "Analyzing {ticker}…",
+        "es": "Analizando {ticker}…"
+    },
+    "portfolio_error_ticker": {
+        "en": "⚠️ Could not load {ticker} — skipped.",
+        "es": "⚠️ No se pudo cargar {ticker} — omitido."
+    },
+    "portfolio_summary_title": {
+        "en": "#### 📊 Portfolio Regime Snapshot",
+        "es": "#### 📊 Instantánea de Regímenes del Portafolio"
+    },
+    "portfolio_col_asset": {
+        "en": "Asset",
+        "es": "Activo"
+    },
+    "portfolio_col_price": {
+        "en": "Price",
+        "es": "Precio"
+    },
+    "portfolio_col_change": {
+        "en": "24h Chg",
+        "es": "Cambio 24h"
+    },
+    "portfolio_col_regime": {
+        "en": "Current Regime",
+        "es": "Régimen Actual"
+    },
+    "portfolio_col_forecast": {
+        "en": "Tomorrow's Forecast",
+        "es": "Pronóstico Mañana"
+    },
+    "portfolio_col_suggestion": {
+        "en": "Suggestion",
+        "es": "Sugerencia"
+    },
+    "portfolio_col_volatility": {
+        "en": "30D Volatility",
+        "es": "Volatilidad 30D"
+    },
+    "portfolio_col_momentum": {
+        "en": "14D Momentum",
+        "es": "Momento 14D"
+    },
+    "portfolio_col_risk": {
+        "en": "Risk Level",
+        "es": "Nivel de Riesgo"
+    },
+    "portfolio_normalized_title": {
+        "en": "#### 📈 Normalized Price Performance (Base = 100)",
+        "es": "#### 📈 Rendimiento de Precio Normalizado (Base = 100)"
+    },
+    "portfolio_normalized_help": {
+        "en": "All assets rebased to 100 at the start of the selected lookback window, allowing direct performance comparison.",
+        "es": "Todos los activos rebasados a 100 al inicio de la ventana de análisis, permitiendo comparar rendimiento directamente."
+    },
+    "portfolio_empty_warning": {
+        "en": "⚠️ No assets loaded. Please select at least one valid ticker and click **Analyze Portfolio**.",
+        "es": "⚠️ No hay activos cargados. Selecciona al menos un ticker válido y haz clic en **Analizar Portafolio**."
+    },
+    "portfolio_max_warning": {
+        "en": "⚠️ Maximum 5 assets allowed for portfolio analysis. Only the first 5 will be analyzed.",
+        "es": "⚠️ Máximo 5 activos permitidos para análisis de portafolio. Solo los primeros 5 serán analizados."
+    }
 }
 
 # ==========================================

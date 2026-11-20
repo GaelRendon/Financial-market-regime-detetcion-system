@@ -613,3 +613,63 @@ This guarantees that:
 Adopting `uv` and `pyproject.toml` elevates the repository to current industry best practices, ensuring quantitative results remain reproducible across machines and over time.
 
 
+---
+
+## 29. Multi-Asset Normalization (Base = 100) & Cross-Asset Regime Comparison
+
+When managing a multi-asset quantitative portfolio, comparing raw nominal price series directly is visually and mathematically misleading:
+- A \$1,000 move in Bitcoin (trading near \$65,000) represents a modest **~1.5%** fluctuation.
+- A \$1,000 move in NVIDIA (trading near \$140) is an impossible **>700%** move on a single stock.
+
+### 1. Mathematical Formulation of Rebased Indexing
+
+To evaluate performance and relative momentum across diverse asset classes (e.g. Cryptocurrencies, Mega-Cap Equities, Gold, and Macro Benchmarks), prices are rebased to an indexed benchmark value (typically 100) at the start of the mutual evaluation window $t_0$:
+
+$$I_i(t) = \left( \frac{P_i(t)}{P_i(t_0)} \right) \times 100$$
+
+Where:
+- $P_i(t)$ is the closing price of asset $i$ at time $t$.
+- $P_i(t_0)$ is the baseline closing price of asset $i$ at the beginning of the lookback horizon.
+- $I_i(t)$ is the dimensionless normalized index of asset $i$.
+
+### 2. Cross-Asset Regime Aggregation
+
+Beyond price performance, Portfolio Mode aggregates the unsupervised regime states across assets:
+1. **Divergence Detection:** Identifies when flight-to-safety assets (e.g. Gold `GC=F`) transition into *Moderate-Volatility Bullish* while risk assets (Cryptos or Equities) enter *High-Volatility Transition* or *High-Volatility Bearish*.
+2. **Correlation-Free Snapshot:** Rather than relying on static correlation matrices (which break down during systemic market shocks), regime comparison provides a state-dependent risk map across the entire portfolio.
+
+**Why this matters to us:**
+Base = 100 normalization and side-by-side regime comparison allow investors to assess portfolio-wide risk exposure at a single glance without scale distortion.
+
+
+---
+
+## 30. Trading Calendar Mechanics: 24/7 Continuous vs. Institutional Markets
+
+Financial assets operate under fundamentally different market schedules:
+- **Cryptocurrencies (BTC, ETH, SOL):** Trade **24/7/365** continuously across all calendar days, with no weekend closures or bank holidays.
+- **Traditional Equities, ETFs, Indices, and Commodities (NVDA, S&P 500, Gold):** Trade strictly on **institutional business days** (Monday through Friday, excluding exchange holidays).
+
+### 1. The Friday-to-Monday Jump Problem
+
+Applying a uniform calendar-day forward simulation or visualization to traditional equities introduces two critical distortions:
+1. **Visual Gaps:** Candlestick charts display large blank intervals over Saturdays and Sundays, cluttering chart layout and distorting moving averages.
+2. **Monte Carlo Horizon Skew:** Simulating 7 calendar days forward for a stock on Friday afternoon would incorrectly generate simulated trading returns for Saturday and Sunday when the exchange is closed.
+
+### 2. Algorithmic Asset Classification and Rangebreaks
+
+The system implements dynamic schedule detection:
+```python
+is_24_7 = bool(clean_data.index.dayofweek.isin([5, 6]).any())
+```
+
+Based on this boolean property:
+- **Forward Trajectory Generator:** Crypto projects over consecutive calendar days; equities and commodities project strictly over valid business trading days (`pd.bdate_range`).
+- **Interactive Candlestick Charts:** Plotly `rangebreaks=[dict(bounds=["sat", "mon"])]` removes non-trading weekend intervals for stocks while preserving 24/7 continuity for crypto.
+- **Persistence Metrics:** Displays *"calendar days"* for crypto vs. *"trading days (Mon-Fri)"* for traditional assets.
+
+**Why this matters to us:**
+Accounting for trading calendar nuances ensures that quantitative projections, holding durations, and charts accurately mirror real-world market operations.
+
+
+

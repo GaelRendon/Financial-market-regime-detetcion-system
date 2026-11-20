@@ -16,9 +16,15 @@ Rather than predicting future asset prices directly, the project seeks to discov
 
 - End-to-end financial data science pipeline.
 - Automated feature engineering for financial time series.
-- Configurable multi-asset architecture.
+- Configurable multi-asset architecture supporting Cryptocurrencies, Equities, Commodities, and Benchmark Indices.
 - **Rolling Z-Score Normalization (252-day window)** — regime detection relative to recent market conditions, not all-time history.
 - **Modern Packaging with `uv` & `pyproject.toml`** — lightning-fast, reproducible dependency management with cryptographic lockfiles (`uv.lock`).
+- **Multi-Language Internationalization (i18n):** Instant live switching between English (`EN`) and Spanish (`ES`) with zero-latency in-memory translations.
+- **Intelligent Autocomplete Search & Directory:** Smart typeahead matching across 40+ curated benchmarks and 150,000+ Yahoo Finance global assets.
+- **Interactive Candlestick (OHLC) & Custom Date Filtering:** Dual-view chart switcher (`Regime Line` vs `Candlestick`), quick-range buttons (`7D`, `1M`, `3M`, `1Y`, `ALL`), calendar date filtering, and institutional weekend gap smoothing.
+- **Trading Calendar Awareness:** Automatic distinction between 24/7 continuous crypto markets and Monday–Friday institutional trading sessions.
+- **Multi-Asset Portfolio Mode (Tab 3):** Side-by-side snapshot comparison matrix of up to 5 assets simultaneously with normalized price performance (Base = 100) indexing.
+- **Modular Frontend Architecture:** Decoupled Streamlit application structure partitioned into dedicated UI modules (`app/ui/styles.py`, `app/ui/sidebar.py`, `app/ui/tab_analysis.py`, `app/ui/tab_simulator.py`, `app/ui/tab_portfolio.py`).
 - PCA-based dimensionality reduction.
 - K-Means market regime detection.
 - Financial interpretation of identified regimes.
@@ -454,9 +460,13 @@ Once launched, open your browser at `http://localhost:8501`.
 
 ### Dashboard Capabilities:
 - **Dynamic Multi-Asset & Fiat Selection:** Analyze Cryptocurrencies (BTC, ETH), Equities (NVDA, AAPL, GOOGL), Commodities (GC=F Gold, SI=F Silver), and Indices (^GSPC, ^NDX) denominated in USD, MXN, EUR, GBP, or CAD.
+- **Bilingual Interface (i18n):** Native support for English (`EN`) and Spanish (`ES`) across all metrics, charts, tables, and rationales with a 1-click header pill popover.
+- **Smart Autocomplete Asset Search:** Google-style typeahead search with live Yahoo Finance integration and a collapsible institutional asset directory cheat-sheet.
 - **Live Quantitative Signals:** Visual recommendation badge with position sizing (100% Invested, 50% Exposure, or 100% Cash) and risk rationale.
 - **Probabilistic Forecasting:** Real-time multi-class regime confidence distribution for tomorrow's market state.
-- **Interactive Visualizations:** Candlestick regime overlays, daily return tail bounds, 30-day rolling volatility, and 14-day momentum.
+- **Interactive Candlestick & Timeline Charts:** Dual-mode chart switcher (`Regime Line` vs `Candlestick OHLC`), instant range selectors (`7D`, `1M`, `3M`, `1Y`, `ALL`), calendar date range popover, and weekend gap removal for traditional markets.
+- **Trading Calendar Awareness:** Automatic detection of 24/7 continuous crypto markets vs. Monday–Friday trading calendar with adjusted holding duration metrics.
 - **Markov Transition Dynamics:** Empirical transition matrix heatmap and expected duration persistence statistics.
-- **🔮 7-Day Capital Growth Simulator (Optional Tab):** Users can enter any capital amount in their chosen currency ($ USD, Mex$ MXN, € EUR, etc.) and receive a day-by-day forward projection with 1,000 Monte Carlo statistical simulation corridors, daily expected P&L, regime progression, and a prominent risk disclaimer (*"It's a prediction, not a statement — take your own risk"*).
+- **🔮 7-Day Capital Growth Simulator (Tab 2):** Forward Monte Carlo money growth projection with 1,000 statistical simulation paths, percentile confidence corridors, expected P&L, day-by-day progression table, and prominent risk disclaimers.
+- **🗂️ Multi-Asset Portfolio Overview (Tab 3):** Side-by-side snapshot comparison matrix of up to 5 assets at once, color-coded regime pills, and normalized price performance (Base = 100) indexed chart.
 - **Power BI / Excel Ready:** 1-click export of the analyzed regime dataset formatted for direct import into Power BI or Excel dashboards.

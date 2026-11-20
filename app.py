@@ -30,6 +30,7 @@ from app.ui.styles import inject_css
 from app.ui.sidebar import render_sidebar
 from app.ui.tab_analysis import render_tab_analysis
 from app.ui.tab_simulator import render_tab_simulator
+from app.ui.tab_portfolio import render_tab_portfolio
 
 # ── Global CSS ────────────────────────────────────────────────────────────────
 inject_css()
@@ -92,9 +93,10 @@ results = st.session_state.get("inference_results")
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 if results:
-    tab_analysis, tab_simulator = st.tabs([
+    tab_analysis, tab_simulator, tab_portfolio = st.tabs([
         t("tab_analysis",  lang=lang),
         t("tab_simulator", lang=lang),
+        t("portfolio_tab_label", lang=lang),
     ])
 
     with tab_analysis:
@@ -115,4 +117,12 @@ if results:
             selected_fiat=cfg.selected_fiat,
             fiat_symbol=cfg.fiat_symbol,
             full_ticker=cfg.full_ticker,
+        )
+
+    with tab_portfolio:
+        render_tab_portfolio(
+            lang=lang,
+            selected_fiat=cfg.selected_fiat,
+            fiat_symbol=cfg.fiat_symbol,
+            selected_period=cfg.selected_period,
         )
