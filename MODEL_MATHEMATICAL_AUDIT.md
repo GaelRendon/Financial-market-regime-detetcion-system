@@ -456,6 +456,44 @@ Empirical percentile curves quantify asymmetric risk corridors:
 $$Q_\alpha(V_\tau) = \inf \left\{ v \in \mathbb{R} \mid \frac{1}{S} \sum_{i=1}^S \mathbf{1}_{\{V_\tau^{(i)} \le v\}} \ge \alpha \right\}$$
 where $\alpha \in \{0.10, 0.25, 0.50, 0.75, 0.90\}$.
 
+### 8.7 Temporal Discretization & Trading Calendar Topology
+In continuous-time stochastic finance, jump processes and transition intervals are conditioned on market activity. When modeling multi-asset classes, the calendar index set $\mathcal{T}$ partitions topologically:
+
+$$\mathcal{T}_{\text{crypto}} = \{t_0 + \tau \cdot \Delta t \mid \Delta t = 1 \text{ calendar day}, \tau \in \{0, 1, \dots, H\}\}$$
+$$\mathcal{T}_{\text{institutional}} = \{t_k \in \text{BusinessDays} \mid t_0 < t_1 < \dots < t_H\}$$
+
+where:
+$$\text{BusinessDays} = \{t \in \mathbb{Z} \mid \text{dayofweek}(t) \notin \{\text{Saturday}, \text{Sunday}\}\}$$
+
+**Mathematical Consequence:**
+For traditional equities and commodities, mapping the Markov forward step $\tau \to \tau+1$ onto calendar time would introduce fictitious zero-return states on weekend exchange closures, artificially depressing annualized empirical volatility $\hat{\sigma}$ and distorting transition matrix spectrum $\text{eig}(\mathbf{P})$. By defining $\Delta t$ over active business trading sessions ($\mathbf{bdate\_range}$), temporal ergodicity is preserved:
+$$\mathbb{E}[R_{\tau+1} \mid \mathcal{F}_\tau] = \mathbf{p}_{\tau+1} \boldsymbol{\mu}$$
+where each step corresponds strictly to an active price discovery auction.
+
+### 8.8 Cross-Asset Dimensionless Indexing (Base = 100)
+To perform cross-asset comparative regime analysis across instruments spanning disparate nominal price orders ($P_i(t) \in [10^{-4}, 10^5]$), the price vector $\mathbf{P}(t) = (P_1(t), \dots, P_M(t))^\top$ is mapped to a dimensionless relative performance manifold $\mathbf{I}(t) \in \mathbb{R}_+^M$ rebased at horizon start $t_0$:
+
+$$I_i(t) = \left( \frac{P_i(t)}{P_i(t_0)} \right) \times 100, \quad \forall i \in \{1, \dots, M\}, \; t \ge t_0$$
+
+This guarantees:
+1. $I_i(t_0) = 100, \; \forall i$ (Scale invariance).
+2. $\frac{d}{dt} \ln I_i(t) = \frac{d}{dt} \ln P_i(t) = r_i(t)$ (Logarithmic return preservation).
+3. Directly comparable relative trajectories without magnitude distortion.
+
+### 8.9 Invariance of Parameter Estimation to Visual Display Horizons
+Let $\mathcal{D}_{\max} = \{(\mathbf{x}_t, y_t)\}_{t=1}^{T_{\max}}$ be the complete historical observation set, and let $\mathcal{D}_{\text{display}} = \{(\mathbf{x}_t, y_t)\}_{t=T_{\max}-T_{\text{lookback}}+1}^{T_{\max}}$ represent the visual lookback partition selected by the user ($T_{\text{lookback}} \le T_{\max}$).
+
+The inference pipeline strictly separates parameter estimation from visualization:
+$$\hat{\boldsymbol{\mu}}_{\text{roll}}, \hat{\boldsymbol{\sigma}}_{\text{roll}} = \phi(\mathcal{D}_{\max}, w=252)$$
+$$\hat{\boldsymbol{\beta}}_{\text{PCA}} = \arg\max_\beta \text{Var}\left(\mathbf{X}_{\max} \beta\right)$$
+$$\hat{\mathbf{C}}_{\text{KMeans}} = \arg\min_{\mathbf{C}} \sum_{t=1}^{T_{\max}} \|\mathbf{z}_t - \mathbf{c}_{k(t)}\|^2$$
+$$\hat{\boldsymbol{\theta}}_{\text{RF}} = \arg\min_{\boldsymbol{\theta}} \mathcal{L}\left(\boldsymbol{\theta}; \mathcal{D}_{\max}\right)$$
+
+Therefore:
+$$\frac{\partial \hat{\boldsymbol{\theta}}_{\text{RF}}}{\partial T_{\text{lookback}}} \equiv 0, \quad \frac{\partial \hat{\mathbf{C}}_{\text{KMeans}}}{\partial T_{\text{lookback}}} \equiv 0$$
+
+**Audit Conclusion:** The model's regime classification, transition probabilities, and forecasting suggestions are provably invariant to visual display filtering. The UI lookback selector acts strictly as a display window operator, ensuring zero statistical instability across user navigation.
+
 ---
 
 ## 9. Mathematical Audit Verification Checklist
@@ -467,7 +505,10 @@ where $\alpha \in \{0.10, 0.25, 0.50, 0.75, 0.90\}$.
 | **PCA** | Orthogonality $\mathbf{V}^T \mathbf{V} = \mathbf{I}$, $\sum \rho_k \ge 0.95$ | Eigenvalue check, Frobenius residual | **VALID** |
 | **Clustering** | Monotonic inertia decay, Global Silhouette peak | $\arg\max_K \bar{s}(K) \implies K=4$ | **VALID** |
 | **Dynamics** | Row-stochastic $\sum_j P_{ij} = 1$, Ergodic $\boldsymbol{\pi}$ | Matrix spectrum check ($\lambda_1 = 1$) | **VALID** |
+| **Calendar Topology** | $\Delta t$ conditioning on market schedule | Asset-type schedule classification check | **VALID** |
+| **Invariance** | $\partial \hat{\theta}/\partial T_{\text{lookback}} = 0$ | Cross-window parameter consistency test | **VALID** |
 | **Forecasting** | No look-ahead bias, strictly causal split | $\max(t_{\text{train}}) < \min(t_{\text{test}})$ | **VALID** |
+| **Backtesting** | 1-period lagged signal execution $w_t = \Phi(\hat{S}_{t-1})$ | Structural lag check $w_t \in \mathcal{F}_{t-1}$ | **VALID** |
 | **Backtesting** | 1-period lagged signal execution $w_t = \Phi(\hat{S}_{t-1})$ | Structural lag check $w_t \in \mathcal{F}_{t-1}$ | **VALID** |
 
 ---
